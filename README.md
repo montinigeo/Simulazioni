@@ -2,6 +2,13 @@
 
 Raccolta di simulazioni didattiche interattive realizzate in HTML/JavaScript, senza dipendenze esterne. Ogni file è autonomo e funziona direttamente nel browser.
 
+### 🚀 Lancia le simulazioni
+
+| Simulazione | Link diretto |
+|-------------|-------------|
+| 🌀 Moto Armonico Periodico | [Apri](https://montinigeo.github.io/Simulazioni/moto_armonico.html) |
+| ⚛️ Diffrattometro XRD | [Apri](https://montinigeo.github.io/Simulazioni/diffrattometro_xrd_v5.html) |
+
 ---
 
 ## 🌀 Moto Armonico Periodico
