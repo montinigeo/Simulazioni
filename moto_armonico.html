@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moto Armonico Periodico</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c10'/%3E%3Ccircle cx='13' cy='16' r='9' fill='none' stroke='%231e2535' stroke-width='1.5' stroke-dasharray='3 2'/%3E%3Cline x1='13' y1='16' x2='20' y2='9' stroke='%2300d4ff' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='20' cy='9' r='2' fill='%2300d4ff'/%3E%3Ccircle cx='20' cy='16' r='2' fill='%23a8ff78'/%3E%3Cline x1='20' y1='9' x2='20' y2='16' stroke='%23a8ff7880' stroke-width='1' stroke-dasharray='2 2'/%3E%3Cline x1='22' y1='16' x2='30' y2='16' stroke='%23ff6b35' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M22 16 Q24 11 26 16 Q28 21 30 16' fill='none' stroke='%23ff6b35' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,600;1,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --panel: #111318;
+    --border: #1e2230;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #a8ff78;
+    --text: #ffffff;
+    --muted: #c8ccd8;
+  }
+
+  /* ── DESKTOP: tutto in 100vh, no scroll ── */
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 0.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    background: linear-gradient(180deg, #0d1018 0%, transparent 100%);
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: 'Crimson Pro', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--accent);
+  }
+  header .subtitle {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN ── */
+  .main-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0; /* needed for flex children to shrink */
+  }
+
+  /* ── BARRA CONTROLLI (riga 1) ── */
+  .top-controls {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+
+  .sidebar {
+    padding: 0.5rem 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.4rem 2rem;
+  }
+
+  .sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  /* parametri orizzontali: i tre slider in riga */
+  .param-group {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    align-items: flex-end;
+  }
+
+  .param-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 130px;
+  }
+
+  .param-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    white-space: nowrap;
+  }
+  .param-label span { color: var(--accent); font-weight: 700; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--accent);
+    transition: transform 0.1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+  .freq-slider::-webkit-slider-thumb { background: var(--accent);  box-shadow: 0 0 6px var(--accent); }
+  .amp-slider::-webkit-slider-thumb  { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .phi-slider::-webkit-slider-thumb  { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+
+  /* controlli play/pause/reset in riga */
+  .controls { display: flex; gap: 0.4rem; }
+  .btn {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .btn:hover  { border-color: var(--accent); color: var(--accent); }
+  .btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* legenda inline */
+  .legend { display: flex; flex-direction: row; gap: 0.8rem; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.62rem; color: var(--muted); white-space: nowrap; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .section-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.2rem;
+    margin-bottom: 0.2rem;
+  }
+
+  /* ── FORMULE (riga 2) ── */
+  .formulas-row {
+    flex-shrink: 0;
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .formula-col {
+    flex: 1;
+    padding: 0.5rem 1.2rem;
+    border-right: 1px solid var(--border);
+  }
+  .formula-col:last-child { border-right: none; }
+
+  .formula-box {
+    background: #070910;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem 0.8rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.2rem;
+    align-items: baseline;
+  }
+  .formula-line {
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .f-cyan   { color: var(--accent); }
+  .f-orange { color: var(--accent2); }
+  .f-green  { color: var(--accent3); }
+  .f-muted  { color: var(--muted); font-size: 0.8rem; font-style: italic; }
+
+  .canvas-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 1rem;
+    padding: 0.6rem 1.2rem;
+    align-items: stretch;
+  }
+
+  /* il wrap del fasore non si espande in larghezza oltre l'altezza disponibile */
+  .canvas-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  /* fasore: quadrato — la larghezza è limitata dall'altezza */
+  .canvas-wrap.square {
+    flex: 0 0 auto;  /* non si espande */
+    width: auto;
+  }
+
+  #circleCanvas {
+    display: block;
+    aspect-ratio: 1 / 1;
+    height: 100%;
+    width: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #07090e;
+  }
+
+  #waveCanvas {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #07090e;
+  }
+
+  .canvas-title {
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    height: 1.2rem;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .info-bar {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    padding: 0.3rem 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    background: var(--panel);
+    font-size: 0.62rem;
+    color: var(--muted);
+  }
+  .info-bar span { color: var(--text); }
+
+  /* ── MOBILE: scroll normale ── */
+  @media (max-width: 700px) {
+    html, body { overflow: auto; height: auto; }
+    .canvas-area { flex-direction: column; padding: 0.8rem; }
+    .canvas-wrap { min-width: 100%; }
+    canvas { aspect-ratio: 1/1; flex: none; }
+    #waveCanvas { aspect-ratio: 2/1; }
+    .param-group { flex-direction: column; }
+    .formulas-row { flex-direction: column; }
+    .formula-box { flex-direction: column; }
+    .legend { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Moto Armonico Periodico</h1>
+  <div class="subtitle">Rappresentazione fasoriale &amp; sinusoidale</div>
+</header>
+
+<div class="main-layout">
+
+  <!-- TOP: PARAMETRI + CONTROLLI + LEGENDA -->
+  <div class="top-controls">
+    <div class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="section-label">Parametri</div>
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-label">Frequenza f <span id="freqVal">1.0</span> Hz</div>
+            <input type="range" class="freq-slider" id="freqSlider" min="0.2" max="4" step="0.1" value="1.0">
+          </div>
+          <div class="param-row">
+            <div class="param-label">Ampiezza A <span id="ampVal">1.0</span></div>
+            <input type="range" class="amp-slider" id="ampSlider" min="0.2" max="1.0" step="0.05" value="1.0">
+          </div>
+          <div class="param-row">
+            <div class="param-label">Fase iniziale φ₀ <span id="phiVal">0°</span></div>
+            <input type="range" class="phi-slider" id="phiSlider" min="0" max="360" step="5" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">Controlli</div>
+        <div class="controls">
+          <button class="btn active" id="btnPlay">▶ Play</button>
+          <button class="btn" id="btnPause">⏸ Pausa</button>
+          <button class="btn" id="btnReset">↺ Reset</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">Legenda</div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#00d4ff;box-shadow:0 0 6px #00d4ff"></div>
+            Fasore rotante
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#a8ff78;box-shadow:0 0 6px #a8ff78"></div>
+            Proiezione Re
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">Grafico temporale</div>
+        <div class="legend" style="flex-direction:row;flex-wrap:wrap;gap:0.4rem 1rem">
+          <label class="legend-item" style="cursor:pointer;gap:0.4rem">
+            <input type="radio" name="plotCurve" id="chkPos" value="pos" checked style="accent-color:#ff6b35">
+            <div class="legend-dot" style="background:#ff6b35;box-shadow:0 0 5px #ff6b35"></div>
+            x(t)
+          </label>
+          <label class="legend-item" style="cursor:pointer;gap:0.4rem">
+            <input type="radio" name="plotCurve" id="chkVel" value="vel" style="accent-color:#c084fc">
+            <div class="legend-dot" style="background:#c084fc;box-shadow:0 0 5px #c084fc"></div>
+            v(t)
+          </label>
+          <label class="legend-item" style="cursor:pointer;gap:0.4rem">
+            <input type="radio" name="plotCurve" id="chkAcc" value="acc" style="accent-color:#f43f5e">
+            <div class="legend-dot" style="background:#f43f5e;box-shadow:0 0 5px #f43f5e"></div>
+            a(t)
+          </label>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">Vettori</div>
+        <label class="legend-item" style="cursor:pointer;gap:0.5rem">
+          <input type="checkbox" id="chkVectors" style="accent-color:#a8ff78">
+          Mostra vettori nel piano fasoriale
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FORMULE AFFIANCATE -->
+  <div class="formulas-row">
+
+    <div class="formula-col">
+      <div class="section-label">Forma trigonometrica</div>
+      <div class="formula-box">
+        <div class="formula-line">
+          x(t) = <span class="f-orange" id="fA">1.00</span> · cos(<span class="f-cyan" id="fW">6.28</span>t + <span class="f-green" id="fPhi">0°</span>)
+        </div>
+        <div class="formula-line f-muted">
+          ω = 2π·f = <span class="f-cyan" id="fOmega">6.28</span> rad/s
+        </div>
+        <div class="formula-line f-muted">
+          T = 1/f = <span class="f-cyan" id="fT">1.00</span> s
+        </div>
+      </div>
+    </div>
+
+    <div class="formula-col">
+      <div class="section-label">Forma fasoriale (fasore)</div>
+      <div class="formula-box">
+        <div class="formula-line">
+          <span class="f-cyan">X̂</span> = <span class="f-orange" id="fA2">1.00</span> · e<sup>j(<span class="f-cyan" id="fW2">6.28</span>t + <span class="f-green" id="fPhi2">0°</span>)</sup>
+        </div>
+        <div class="formula-line f-muted">
+          x(t) = Re{ <span class="f-cyan">X̂</span>(t) }
+        </div>
+        <div class="formula-line">
+          θ(t) = <span id="fTheta" class="f-cyan">0.0°</span> &nbsp;·&nbsp; x(t) = <span id="fXt" class="f-orange">1.000</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- GRAFICI AFFIANCATI -->
+  <div class="canvas-area">
+
+    <div class="canvas-wrap square">
+      <div class="canvas-title">Piano fasoriale — Re / Im</div>
+      <canvas id="circleCanvas" width="400" height="400"></canvas>
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="canvas-title">Andamento temporale — x(t)</div>
+      <canvas id="waveCanvas" width="800" height="400"></canvas>
+    </div>
+
+  </div>
+
+  <!-- INFO BAR -->
+  <div class="info-bar">
+    <div>f = <span id="infoF">1.0</span> Hz</div>
+    <div>ω = <span id="infoW">6.28</span> rad/s</div>
+    <div>T = <span id="infoT">1.00</span> s</div>
+    <div>θ = <span id="infoTheta">0.0</span>°</div>
+    <div>x(t) = <span id="infoX">1.000</span></div>
+  </div>
+
+</div>
+
+<script>
+// ────────────────────────────────────────────────────────────────────────────
+// State
+// ────────────────────────────────────────────────────────────────────────────
+const state = {
+  freq: 1.0,
+  amp: 1.0,
+  phi0: 0,
+  t: 0,
+  running: true,
+  lastWallTime: null,   // performance.now() dell'ultimo frame
+};
+
+const WAVE_BUFFER_SECS = 4;
+const waveData  = [];   // {t, x}
+const markers   = [];   // {t, label, color} — linee verticali al cambio parametro
+
+// ────────────────────────────────────────────────────────────────────────────
+// Tempo in background: aggiorna state.t anche quando la tab è nascosta
+// usando performance.now() invece di requestAnimationFrame timestamps
+// ────────────────────────────────────────────────────────────────────────────
+let bgInterval = null;
+
+function startBgClock() {
+  if (bgInterval) return;
+  state.lastWallTime = performance.now();
+  bgInterval = setInterval(() => {
+    if (!state.running) return;
+    const now = performance.now();
+    const dt = (now - state.lastWallTime) / 1000;
+    state.lastWallTime = now;
+    state.t += dt;
+    // accumula punti anche in background
+    const omega = 2 * Math.PI * state.freq;
+    const theta = omega * state.t + state.phi0;
+    const xNow  = state.amp * Math.cos(theta);
+    waveData.push({ t: state.t, x: xNow });
+    const cutoff = state.t - WAVE_BUFFER_SECS - 0.1;
+    while (waveData.length > 1 && waveData[0].t < cutoff) waveData.shift();
+  }, 16); // ~60fps in background
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // tab nascosta: continua con setInterval
+    state.lastWallTime = performance.now();
+  } else {
+    // tab tornata visibile: resetta lastWallTime per evitare salti
+    state.lastWallTime = performance.now();
+  }
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// DOM refs
+// ────────────────────────────────────────────────────────────────────────────
+const cCircle = document.getElementById('circleCanvas');
+const cWave   = document.getElementById('waveCanvas');
+const gC = cCircle.getContext('2d');
+const gW = cWave.getContext('2d');
+
+const freqSlider = document.getElementById('freqSlider');
+const ampSlider  = document.getElementById('ampSlider');
+const phiSlider  = document.getElementById('phiSlider');
+
+// ────────────────────────────────────────────────────────────────────────────
+// Aggiunge un marker verticale al tempo corrente
+// ────────────────────────────────────────────────────────────────────────────
+function addMarker(label, color) {
+  markers.push({ t: state.t, label, color });
+  // rimuovi marker troppo vecchi
+  const cutoff = state.t - WAVE_BUFFER_SECS - 0.1;
+  while (markers.length && markers[0].t < cutoff) markers.shift();
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Controls
+// ────────────────────────────────────────────────────────────────────────────
+document.getElementById('btnPlay').addEventListener('click', () => {
+  state.running = true;
+  state.lastWallTime = performance.now();
+  document.getElementById('btnPlay').classList.add('active');
+  document.getElementById('btnPause').classList.remove('active');
+});
+document.getElementById('btnPause').addEventListener('click', () => {
+  state.running = false;
+  document.getElementById('btnPause').classList.add('active');
+  document.getElementById('btnPlay').classList.remove('active');
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  state.t = 0;
+  state.lastWallTime = performance.now();
+  waveData.length = 0;
+  markers.length  = 0;
+  state.running = true;
+  document.getElementById('btnPlay').classList.add('active');
+  document.getElementById('btnPause').classList.remove('active');
+});
+
+freqSlider.addEventListener('input', () => {
+  state.freq = parseFloat(freqSlider.value);
+  addMarker('f=' + state.freq.toFixed(1), '#00d4ff');
+  updateSidebar();
+});
+ampSlider.addEventListener('input', () => {
+  state.amp = parseFloat(ampSlider.value);
+  addMarker('A=' + state.amp.toFixed(2), '#ff6b35');
+  updateSidebar();
+});
+phiSlider.addEventListener('input', () => {
+  state.phi0 = parseFloat(phiSlider.value) * Math.PI / 180;
+  document.getElementById('phiVal').textContent = phiSlider.value + '°';
+  addMarker('φ=' + phiSlider.value + '°', '#a8ff78');
+  updateSidebar();
+});
+
+// Marker al cambio curva selezionata
+const curveColors = { pos: '#ff6b35', vel: '#c084fc', acc: '#f43f5e' };
+const curveLabels = { pos: 'x(t)', vel: 'v(t)', acc: 'a(t)' };
+document.querySelectorAll('input[name="plotCurve"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    state.t = 0;
+    state.lastWallTime = performance.now();
+    waveData.length = 0;
+    markers.length  = 0;
+    addMarker(curveLabels[radio.value], curveColors[radio.value]);
+  });
+});
+
+function updateSidebar() {
+  const f = state.freq, A = state.amp, phi = state.phi0;
+  const omega = 2 * Math.PI * f;
+  const T = 1 / f;
+  const phi_deg = (phi * 180 / Math.PI).toFixed(0);
+
+  document.getElementById('freqVal').textContent = f.toFixed(1);
+  document.getElementById('ampVal').textContent  = A.toFixed(2);
+
+  // Trigonometric
+  document.getElementById('fA').textContent   = A.toFixed(2);
+  document.getElementById('fW').textContent   = omega.toFixed(2);
+  document.getElementById('fPhi').textContent = phi_deg + '°';
+  document.getElementById('fOmega').textContent = omega.toFixed(2);
+  document.getElementById('fT').textContent     = T.toFixed(2);
+
+  // Fasoriale
+  document.getElementById('fA2').textContent   = A.toFixed(2);
+  document.getElementById('fW2').textContent   = omega.toFixed(2);
+  document.getElementById('fPhi2').textContent = phi_deg + '°';
+
+  // Info bar
+  document.getElementById('infoF').textContent = f.toFixed(1);
+  document.getElementById('infoW').textContent = omega.toFixed(2);
+  document.getElementById('infoT').textContent = T.toFixed(2);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Shared vertical scale: pixels per unit (1 = max amplitude)
+// Computed from the circle canvas so both canvases use identical scaling
+// ────────────────────────────────────────────────────────────────────────────
+function getScale() {
+  // Use circle canvas height as reference: leave 15% margin top+bottom
+  return Math.min(cCircle.width, cCircle.height) * 0.38;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Draw circle (phasor)
+// ────────────────────────────────────────────────────────────────────────────
+function drawCircle(theta, amp) {
+  const W = cCircle.width, H = cCircle.height;
+  // Use same margins as drawWave so cy is identical in both canvases
+  const margin = { top: 30, bottom: 30 };
+  const ph = H - margin.top - margin.bottom;
+  const cx = W / 2;
+  const cy = margin.top + ph / 2;   // == H/2 since margins are symmetric
+
+  const scale = getScale();
+  const R = scale * amp;
+  const Rmax = scale;
+
+  gC.clearRect(0, 0, W, H);
+
+  // Grid circles (faint)
+  for (let r = Rmax * 0.33; r <= Rmax * 1.01; r += Rmax * 0.33) {
+    gC.beginPath();
+    gC.arc(cx, cy, r, 0, Math.PI * 2);
+    gC.strokeStyle = '#3a4060';
+    gC.lineWidth = 1;
+    gC.stroke();
+  }
+
+  // Axes
+  gC.strokeStyle = '#4a5060';
+  gC.lineWidth = 1;
+  gC.beginPath(); gC.moveTo(20, cy); gC.lineTo(W - 20, cy); gC.stroke();
+  gC.beginPath(); gC.moveTo(cx, 20); gC.lineTo(cx, H - 20); gC.stroke();
+
+  // Axis labels
+  gC.fillStyle = '#ffffff';
+  gC.font = '11px Space Mono, monospace';
+  gC.fillText('Re', W - 30, cy - 8);
+  gC.fillText('Im', cx + 8, 30);
+
+  // Unit circle outline
+  gC.beginPath();
+  gC.arc(cx, cy, Rmax, 0, Math.PI * 2);
+  gC.strokeStyle = '#4a6080';
+  gC.lineWidth = 1.5;
+  gC.setLineDash([4, 4]);
+  gC.stroke();
+  gC.setLineDash([]);
+
+  // Etichette angoli sulla circonferenza
+  const angLabels = [
+    { a: 0,           label: '0°'   },
+    { a: Math.PI/2,   label: '90°'  },
+    { a: Math.PI,     label: '180°' },
+    { a: 3*Math.PI/2, label: '270°' },
+  ];
+  gC.font = '10px Space Mono';
+  for (const {a, label} of angLabels) {
+    const lx = cx + (Rmax + 14) * Math.cos(a);
+    const ly = cy - (Rmax + 14) * Math.sin(a);   // y flipped
+    gC.fillStyle = '#ffffff';
+    gC.textAlign = 'center';
+    gC.textBaseline = 'middle';
+    gC.fillText(label, lx, ly);
+  }
+  gC.textAlign = 'left';
+  gC.textBaseline = 'alphabetic';
+
+  // Fasore: rappresenta il parametro selezionato
+  const plotCurveP = document.querySelector('input[name="plotCurve"]:checked').value;
+  const phasorAngle = plotCurveP === 'vel' ? theta + Math.PI/2 :
+                      plotCurveP === 'acc' ? theta + Math.PI   : theta;
+  const phasorColor = plotCurveP === 'vel' ? '#c084fc' :
+                      plotCurveP === 'acc' ? '#f43f5e' : '#ff6b35';
+
+  // Estremo del fasore sulla circonferenza
+  const px = cx + R * Math.cos(phasorAngle);
+  const py = cy - R * Math.sin(phasorAngle);
+
+  // Linea tratteggiata di proiezione sull'asse Re
+  // La proiezione è il valore istantaneo del parametro selezionato
+  const projValue = plotCurveP === 'vel' ? -Math.sin(theta) :
+                    plotCurveP === 'acc' ? -Math.cos(theta) : Math.cos(theta);
+  const projX = cx + projValue * R;  // posizione sulla Re
+
+  gC.setLineDash([3, 5]);
+  gC.strokeStyle = phasorColor + '60';
+  gC.lineWidth = 1;
+  gC.beginPath(); gC.moveTo(px, py); gC.lineTo(projX, cy); gC.stroke();
+  gC.setLineDash([]);
+
+  // Pallino sulla proiezione — colore del parametro corrente
+  gC.beginPath();
+  gC.arc(projX, cy, 5, 0, Math.PI * 2);
+  gC.fillStyle = phasorColor;
+  gC.shadowColor = phasorColor;
+  gC.shadowBlur = 10;
+  gC.fill();
+  gC.shadowBlur = 0;
+
+  // Fasore: per posizione e velocità dal centro verso l'esterno (freccia in punta)
+  //         per accelerazione dall'esterno verso il centro (freccia al centro = centripeta)
+  const AL = 12;
+  if (plotCurveP === 'acc') {
+    // Linea da px,py verso cx,cy — freccia naturalmente al centro
+    gC.beginPath();
+    gC.moveTo(px, py);
+    gC.lineTo(cx, cy);
+    gC.strokeStyle = phasorColor;
+    gC.lineWidth = 2.5;
+    gC.shadowColor = phasorColor; gC.shadowBlur = 12;
+    gC.stroke(); gC.shadowBlur = 0;
+    // Freccia in punta al centro
+    const ang = Math.atan2(cy - py, cx - px);
+    gC.beginPath();
+    gC.moveTo(cx, cy);
+    gC.lineTo(cx - AL * Math.cos(ang - 0.4), cy - AL * Math.sin(ang - 0.4));
+    gC.lineTo(cx - AL * Math.cos(ang + 0.4), cy - AL * Math.sin(ang + 0.4));
+    gC.closePath();
+    gC.fillStyle = phasorColor;
+    gC.shadowColor = phasorColor; gC.shadowBlur = 10;
+    gC.fill(); gC.shadowBlur = 0;
+  } else {
+    // Linea dal centro verso l'esterno — freccia in punta esterna
+    gC.beginPath();
+    gC.moveTo(cx, cy);
+    gC.lineTo(px, py);
+    gC.strokeStyle = phasorColor;
+    gC.lineWidth = 2.5;
+    gC.shadowColor = phasorColor; gC.shadowBlur = 12;
+    gC.stroke(); gC.shadowBlur = 0;
+    const ang = Math.atan2(cy - py, px - cx);
+    gC.beginPath();
+    gC.moveTo(px, py);
+    gC.lineTo(px - AL * Math.cos(ang - 0.4), py + AL * Math.sin(ang - 0.4));
+    gC.lineTo(px - AL * Math.cos(ang + 0.4), py + AL * Math.sin(ang + 0.4));
+    gC.closePath();
+    gC.fillStyle = phasorColor;
+    gC.shadowColor = phasorColor; gC.shadowBlur = 10;
+    gC.fill(); gC.shadowBlur = 0;
+  }
+
+  // Center dot
+  gC.beginPath();
+  gC.arc(cx, cy, 4, 0, Math.PI * 2);
+  gC.fillStyle = '#ffffff';
+  gC.fill();
+
+  // ── Vettori del MOTO ARMONICO (proiezioni sull'asse Re) ──
+  // Tutti partono dal pallino verde (proiezione sull'asse Re)
+  // projX = cx + R*cos(θ)  → posizione del pallino verde
+  // cy    = asse Re (y del centro)
+  //
+  // Vettore POSIZIONE: dall'origine (cx,cy) al pallino verde (projX, cy) → lungo asse Re
+  // Vettore VELOCITÀ:  dal pallino verde, perpendicolare all'asse Re (su/giù)
+  //                    modulo = -sin(θ) * R (può essere positivo o negativo)
+  // Vettore ACCELERAZIONE: dal pallino verde, lungo l'asse Re
+  //                    modulo = -cos(θ) * R (opposta alla posizione)
+
+  const showVectors = document.getElementById('chkVectors').checked;
+  function drawArrow(x1, y1, x2, y2, color) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 2) return;
+    gC.beginPath();
+    gC.moveTo(x1, y1);
+    gC.lineTo(x2, y2);
+    gC.strokeStyle = color;
+    gC.lineWidth = 2.5;
+    gC.shadowColor = color;
+    gC.shadowBlur = 8;
+    gC.stroke();
+    gC.shadowBlur = 0;
+    const ang = Math.atan2(dy, dx);
+    const AL = 10;
+    gC.beginPath();
+    gC.moveTo(x2, y2);
+    gC.lineTo(x2 - AL*Math.cos(ang-0.4), y2 - AL*Math.sin(ang-0.4));
+    gC.lineTo(x2 - AL*Math.cos(ang+0.4), y2 - AL*Math.sin(ang+0.4));
+    gC.closePath();
+    gC.fillStyle = color;
+    gC.shadowColor = color; gC.shadowBlur = 6;
+    gC.fill(); gC.shadowBlur = 0;
+  }
+
+  if (showVectors) {
+    const plotCurveC = document.querySelector('input[name="plotCurve"]:checked').value;
+    const showPosC = plotCurveC === 'pos';
+    const showVelC = plotCurveC === 'vel';
+    const showAccC = plotCurveC === 'acc';
+
+    if (showPosC) drawArrow(cx, cy, projX, cy, '#ff6b35');
+    if (showVelC) { const vMag = -Math.sin(theta) * R; drawArrow(projX, cy, projX + vMag, cy, '#c084fc'); }
+    if (showAccC) { const aMag = -Math.cos(theta) * R; drawArrow(projX, cy, projX + aMag, cy, '#f43f5e'); }
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Draw wave (sinusoid)
+// ────────────────────────────────────────────────────────────────────────────
+function drawWave(currentX) {
+  const W = cWave.width, H = cWave.height;
+  const margin = { top: 30, bottom: 30, left: 48, right: 24 };
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  // cy must sit at the same vertical fraction as in the circle canvas (both centered)
+  const cy = margin.top + ph / 2;
+
+  // Use the SAME scale as the circle canvas
+  const scale = getScale();
+  // vy: converts a value in [-1..1] to canvas Y, using shared scale
+  const vy = v => cy - v * scale;
+
+  gW.clearRect(0, 0, W, H);
+
+  const tMax = WAVE_BUFFER_SECS;
+  const tMin = Math.max(0, state.t - tMax);
+  const tx = t => margin.left + ((t - tMin) / tMax) * pw;
+
+  // Grid horizontal lines at 0, ±0.5, ±A
+  const gridVals = [-state.amp, -state.amp/2, 0, state.amp/2, state.amp];
+  for (const v of gridVals) {
+    const y = vy(v);
+    if (y < margin.top || y > margin.top + ph) continue;
+    gW.beginPath();
+    gW.moveTo(margin.left, y);
+    gW.lineTo(margin.left + pw, y);
+    gW.strokeStyle = v === 0 ? '#2a2e3a' : '#181c26';
+    gW.lineWidth = v === 0 ? 1.5 : 1;
+    gW.stroke();
+
+    if (v !== 0) {
+      gW.fillStyle = '#ffffff';
+      gW.font = '9px Space Mono';
+      gW.fillText(v.toFixed(2), 2, y + 3);
+    }
+  }
+
+  // Period markers
+  const T = 1 / state.freq;
+  let tMark = Math.ceil(tMin / T) * T;
+  while (tMark <= state.t + 0.01) {
+    if (tMark >= tMin) {
+      const xm = tx(tMark);
+      gW.beginPath();
+      gW.moveTo(xm, margin.top);
+      gW.lineTo(xm, margin.top + ph);
+      gW.strokeStyle = '#1e2535';
+      gW.lineWidth = 1;
+      gW.setLineDash([2, 6]);
+      gW.stroke();
+      gW.setLineDash([]);
+      gW.fillStyle = '#aabbcc';
+      gW.font = '9px Space Mono';
+      gW.fillText('T', xm + 2, margin.top + 12);
+    }
+    tMark += T;
+  }
+
+  // Amplitude label
+  gW.fillStyle = '#ff6b3580';
+  gW.font = '9px Space Mono';
+  gW.fillText('A', margin.left - 14, vy(state.amp) + 3);
+  gW.fillText('-A', margin.left - 18, vy(-state.amp) + 3);
+
+  // Amplitude lines (dashed orange)
+  for (const v of [state.amp, -state.amp]) {
+    gW.setLineDash([4, 8]);
+    gW.strokeStyle = '#ff6b3530';
+    gW.lineWidth = 1;
+    gW.beginPath();
+    gW.moveTo(margin.left, vy(v));
+    gW.lineTo(margin.left + pw, vy(v));
+    gW.stroke();
+    gW.setLineDash([]);
+  }
+
+  // Marker verticali al cambio parametro
+  const cutoffM = state.t - WAVE_BUFFER_SECS - 0.1;
+  while (markers.length && markers[0].t < cutoffM) markers.shift();
+  for (const m of markers) {
+    if (m.t < tMin) continue;
+    const xm = tx(m.t);
+    gW.beginPath();
+    gW.moveTo(xm, margin.top);
+    gW.lineTo(xm, margin.top + ph);
+    gW.strokeStyle = m.color;
+    gW.lineWidth = 1.5;
+    gW.setLineDash([4, 3]);
+    gW.stroke();
+    gW.setLineDash([]);
+    // etichetta
+    gW.fillStyle = m.color;
+    gW.font = '9px Space Mono';
+    gW.fillText(m.label, xm + 3, margin.top + 22);
+  }
+
+  // Helper: disegna una curva dai dati con glow
+  function drawCurveLocal(field, color) {
+    if (waveData.length < 2) return;
+    gW.beginPath();
+    let started = false;
+    for (const pt of waveData) {
+      if (pt.t < tMin) continue;
+      const x = tx(pt.t), y = vy(pt[field]);
+      if (!started) { gW.moveTo(x, y); started = true; }
+      else gW.lineTo(x, y);
+    }
+    gW.strokeStyle = color; gW.lineWidth = 2.5;
+    gW.shadowColor = color; gW.shadowBlur = 10;
+    gW.stroke(); gW.shadowBlur = 0;
+    gW.globalAlpha = 0.5; gW.lineWidth = 1;
+    gW.beginPath(); started = false;
+    for (const pt of waveData) {
+      if (pt.t < tMin) continue;
+      const x = tx(pt.t), y = vy(pt[field]);
+      if (!started) { gW.moveTo(x, y); started = true; }
+      else gW.lineTo(x, y);
+    }
+    gW.stroke(); gW.globalAlpha = 1;
+  }
+
+  const plotCurve = document.querySelector('input[name="plotCurve"]:checked').value;
+  const showPos = plotCurve === 'pos';
+  const showVel = plotCurve === 'vel';
+  const showAcc = plotCurve === 'acc';
+
+  if (showVel) drawCurveLocal('v', '#c084fc');
+  if (showAcc) drawCurveLocal('a', '#f43f5e');
+
+  // Draw sinusoid from stored data
+  if (showPos && waveData.length > 1) {
+    gW.beginPath();
+    let started = false;
+    for (const pt of waveData) {
+      if (pt.t < tMin) continue;
+      const x = tx(pt.t), y = vy(pt.x);
+      if (!started) { gW.moveTo(x, y); started = true; }
+      else gW.lineTo(x, y);
+    }
+    gW.strokeStyle = '#ff6b35'; gW.lineWidth = 3;
+    gW.shadowColor = '#ff6b35'; gW.shadowBlur = 14;
+    gW.stroke(); gW.shadowBlur = 0;
+    gW.beginPath(); started = false;
+    for (const pt of waveData) {
+      if (pt.t < tMin) continue;
+      const x = tx(pt.t), y = vy(pt.x);
+      if (!started) { gW.moveTo(x, y); started = true; }
+      else gW.lineTo(x, y);
+    }
+    gW.strokeStyle = '#ff8c60'; gW.lineWidth = 1.5; gW.stroke();
+  }
+
+  // Cursore e dots
+  const curX = tx(state.t);
+  const curY = vy(currentX);
+
+  if (showPos) {
+    gW.setLineDash([3, 5]); gW.strokeStyle = '#a8ff7840'; gW.lineWidth = 1;
+    gW.beginPath(); gW.moveTo(curX, margin.top); gW.lineTo(curX, margin.top + ph); gW.stroke();
+    gW.setLineDash([]);
+    gW.beginPath(); gW.arc(curX, curY, 8, 0, Math.PI*2);
+    gW.fillStyle = '#ff6b3520'; gW.fill();
+    gW.beginPath(); gW.arc(curX, curY, 5, 0, Math.PI*2);
+    gW.fillStyle = '#ff6b35'; gW.shadowColor = '#ff6b35'; gW.shadowBlur = 16;
+    gW.fill(); gW.shadowBlur = 0;
+  }
+  if (showVel && waveData.length > 0) {
+    const vNow = waveData[waveData.length-1].v;
+    gW.beginPath(); gW.arc(curX, vy(vNow), 4, 0, Math.PI*2);
+    gW.fillStyle = '#c084fc'; gW.shadowColor = '#c084fc'; gW.shadowBlur = 10;
+    gW.fill(); gW.shadowBlur = 0;
+  }
+  if (showAcc && waveData.length > 0) {
+    const aNow = waveData[waveData.length-1].a;
+    gW.beginPath(); gW.arc(curX, vy(aNow), 4, 0, Math.PI*2);
+    gW.fillStyle = '#f43f5e'; gW.shadowColor = '#f43f5e'; gW.shadowBlur = 10;
+    gW.fill(); gW.shadowBlur = 0;
+  }
+
+  // Axes labels
+  gW.fillStyle = '#ffffff'; gW.font = '10px Space Mono';
+  gW.fillText('t (s)', margin.left + pw - 20, H - 8);
+  gW.fillText('x v a', margin.left + 4, margin.top - 8);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Resize wave canvas to match its CSS display size
+// ────────────────────────────────────────────────────────────────────────────
+function resizeCanvases() {
+  const rC = cCircle.getBoundingClientRect();
+  if (rC.height > 0) {
+    // circleCanvas è height:100% nel suo wrap, ed ha aspect-ratio 1/1 via CSS
+    // la dimensione effettiva è quella restituita da getBoundingClientRect
+    const sz = Math.round(rC.height);
+    cCircle.width  = sz;
+    cCircle.height = sz;
+  }
+  const rW = cWave.getBoundingClientRect();
+  if (rW.width > 0) {
+    cWave.width  = Math.round(rW.width);
+    cWave.height = cCircle.height;   // stessa altezza per allineare lo zero
+    cWave.style.height = cCircle.height + 'px';
+  }
+}
+window.addEventListener('resize', resizeCanvases);
+setTimeout(resizeCanvases, 80);
+
+// ────────────────────────────────────────────────────────────────────────────
+// Animation loop — usa performance.now() per il tempo reale
+// ────────────────────────────────────────────────────────────────────────────
+function tick() {
+  if (state.running) {
+    const now = performance.now();
+    if (state.lastWallTime !== null) {
+      const dt = (now - state.lastWallTime) / 1000;
+      state.t += dt;
+      // accumula punto nella sinusoide
+      const omega = 2 * Math.PI * state.freq;
+      const theta = omega * state.t + state.phi0;
+      const xNow  = state.amp * Math.cos(theta);
+      const vNow  = -Math.sin(theta);   // velocità normalizzata
+      const aNow  = -Math.cos(theta);   // accelerazione normalizzata
+      waveData.push({ t: state.t, x: xNow, v: vNow, a: aNow });
+      const cutoff = state.t - WAVE_BUFFER_SECS - 0.1;
+      while (waveData.length > 1 && waveData[0].t < cutoff) waveData.shift();
+    }
+    state.lastWallTime = now;
+  }
+
+  const omega = 2 * Math.PI * state.freq;
+  const theta = omega * state.t + state.phi0;
+  const xNow  = state.amp * Math.cos(theta);
+
+  // Disegna
+  drawCircle(theta, state.amp);
+  drawWave(xNow);
+
+  // Aggiorna valori live
+  const theta_deg = ((theta * 180 / Math.PI) % 360).toFixed(1);
+  document.getElementById('fTheta').textContent = theta_deg + '°';
+  document.getElementById('fXt').textContent    = xNow.toFixed(3);
+  document.getElementById('infoTheta').textContent = theta_deg;
+  document.getElementById('infoX').textContent     = xNow.toFixed(3);
+
+  requestAnimationFrame(tick);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Init
+// ────────────────────────────────────────────────────────────────────────────
+state.lastWallTime = performance.now();
+updateSidebar();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

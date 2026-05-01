@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diffrattometro XRD</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f172a'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%2338bdf8' stroke-width='2'/%3E%3Cline x1='4' y1='16' x2='11' y2='16' stroke='%23f59e0b' stroke-width='2'/%3E%3Cline x1='21' y1='16' x2='28' y2='16' stroke='%2338bdf8' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:      #0f172a;
+  --bg2:     #1e293b;
+  --card:    #1e293b;
+  --border:  #334155;
+  --text:    #ffffff;
+  --muted:   #c8d0e0;
+  --accent:  #38bdf8;
+  --xray:    #fbbf24;
+  --diff:    #34d399;
+  --peak:    #f87171;
+  --crystal: #a78bfa;
+}
+
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+body{display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+header{
+  padding:0.4rem 1.2rem;
+  background:#0a1020;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;gap:1rem;
+}
+header h1{font-size:1rem;font-weight:700;color:var(--accent);letter-spacing:-0.01em}
+header h1 span{color:var(--xray)}
+.bragg-eq{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.78rem;color:var(--muted);
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;padding:0.25rem 0.7rem;
+  white-space:nowrap;
+}
+.bragg-eq b{color:var(--accent)}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;min-height:0}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:230px;flex-shrink:0;
+  background:#0a1020;border-right:1px solid var(--border);
+  padding:0.8rem;display:flex;flex-direction:column;gap:0.9rem;
+  overflow-y:auto;
+}
+
+.s-label{
+  font-size:0.58rem;font-weight:700;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--border);padding-bottom:0.25rem;
+  margin-bottom:0.1rem;
+}
+
+select,button{font-family:'Inter',sans-serif}
+
+select{
+  width:100%;padding:0.35rem 0.5rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-size:0.75rem;
+  cursor:pointer;outline:none;
+}
+select:focus{border-color:var(--accent)}
+
+.ctrl-row{display:flex;flex-direction:column;gap:0.2rem}
+.ctrl-hdr{
+  display:flex;justify-content:space-between;
+  font-size:0.7rem;font-weight:600;color:var(--text)
+}
+.ctrl-hdr span{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.75rem;color:var(--accent)
+}
+
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:3px;
+  background:var(--border);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--accent);cursor:pointer;
+  box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent);
+  transition:transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+
+.btn{
+  width:100%;padding:0.4rem;border-radius:6px;
+  border:1px solid var(--border);background:var(--card);
+  color:var(--text);font-size:0.73rem;font-weight:600;
+  cursor:pointer;transition:all 0.15s;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#0a1020;border-color:var(--accent)}
+.btn.primary:hover{background:#7dd3fc}
+
+.info-box{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:0.6rem;
+  font-size:0.68rem;line-height:1.6;color:var(--muted);
+}
+.info-box b{color:var(--text)}
+.info-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.78rem;color:var(--accent);font-weight:600;
+}
+
+/* geo buttons */
+.geo-btns{display:flex;gap:0.3rem;flex-direction:column}
+.geo-btn{
+  padding:0.35rem 0.5rem;border-radius:6px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);font-size:0.68rem;font-weight:600;
+  cursor:pointer;transition:all 0.15s;text-align:left;
+}
+.geo-btn:hover{border-color:var(--accent);color:var(--text)}
+.geo-btn.active{background:var(--accent);color:#0a1020;border-color:var(--accent)}
+
+/* peak table */
+.peak-table{
+  font-family:'JetBrains Mono',monospace;font-size:0.65rem;
+  width:100%;border-collapse:collapse;
+}
+.peak-table th{color:var(--muted);font-weight:600;padding:0.15rem 0.3rem;border-bottom:1px solid var(--border);text-align:left}
+.peak-table td{color:var(--text);padding:0.15rem 0.3rem}
+.peak-table tr.active-row td{color:var(--accent)}
+
+/* ── CENTRO ── */
+.center{
+  flex:1;min-width:0;min-height:0;
+  display:flex;flex-direction:row;gap:0;
+}
+
+/* schema ottico */
+.schema-wrap{
+  flex:1;min-height:0;min-width:0;
+  position:relative;border-right:1px solid var(--border);
+}
+canvas#schema{width:100%;height:100%;display:block;background:#080f1e}
+
+/* diffrattogramma */
+.diffr-wrap{
+  flex:1;min-height:0;min-width:0;position:relative;
+  background:#080f1e;
+}
+canvas#diffr{width:100%;height:100%;display:block}
+
+/* label flottante */
+.float-label{
+  position:absolute;top:6px;left:10px;
+  font-size:0.6rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--muted);
+  pointer-events:none;
+}
+
+@media(max-width:800px){
+  html,body{overflow:auto;height:auto}
+  .layout{flex-direction:column}
+  .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border)}
+  .center{flex-direction:column;min-height:0}
+  .schema-wrap{min-height:0;border-right:none;border-bottom:1px solid var(--border)}
+  canvas#schema{aspect-ratio:1/1;height:auto}
+  canvas#diffr{aspect-ratio:2/1;height:auto}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚛ Diffrattometro <span>XRD</span></h1>
+  <div class="bragg-eq">Legge di Bragg: <b>nλ = 2d · sin(θ)</b></div>
+</header>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+
+  <div>
+    <div class="s-label">Materiale</div>
+    <select id="matSel"></select>
+  </div>
+
+  <div>
+    <div class="s-label">Geometria</div>
+    <div class="geo-btns">
+      <button class="geo-btn active" data-geo="bb">Bragg-Brentano (θ/2θ)</button>
+      <button class="geo-btn" data-geo="tt">θ-θ (campione fisso)</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="s-label">Sorgente</div>
+    <select id="srcSel">
+      <option value="1.5406">Cu Kα — λ=1.5406 Å</option>
+      <option value="0.7093">Mo Kα — λ=0.7093 Å</option>
+      <option value="1.7902">Co Kα — λ=1.7902 Å</option>
+      <option value="2.2909">Cr Kα — λ=2.2909 Å</option>
+    </select>
+  </div>
+
+  <div>
+    <div class="s-label">Scansione</div>
+    <div class="ctrl-row">
+      <div class="ctrl-hdr">Velocità <span id="speedVal">2°/s</span></div>
+      <input type="range" id="speedSlider" min="0.5" max="10" step="0.5" value="2">
+    </div>
+    <div class="ctrl-row" style="margin-top:0.5rem">
+      <div class="ctrl-hdr">2θ corrente <span id="twoThVal">5.0°</span></div>
+      <input type="range" id="manSlider" min="5" max="90" step="0.1" value="5">
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:0.4rem">
+    <button class="btn primary" id="btnScan">▶ Scansione automatica</button>
+    <button class="btn" id="btnReset">↺ Reset</button>
+  </div>
+
+  <div>
+    <div class="s-label">Lettura corrente</div>
+    <div class="info-box">
+      <div>2θ: <span class="info-val" id="readTwoTh">—</span></div>
+      <div>θ: <span class="info-val" id="readTh">—</span></div>
+      <div>d<sub>hkl</sub>: <span class="info-val" id="readD">—</span> Å</div>
+      <div>Intensità: <span class="info-val" id="readI">—</span></div>
+      <div style="margin-top:0.3rem;color:var(--text);font-size:0.65rem" id="readPeak"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="s-label">Picchi attesi</div>
+    <table class="peak-table" id="peakTable">
+      <thead><tr><th>hkl</th><th>d(Å)</th><th>2θ(°)</th><th>I/I₀</th></tr></thead>
+      <tbody id="peakTbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ── CENTRO ── -->
+<div class="center">
+
+  <div class="schema-wrap">
+    <canvas id="schema"></canvas>
+    <div class="float-label">Schema ottico</div>
+  </div>
+
+  <div class="diffr-wrap">
+    <canvas id="diffr"></canvas>
+    <div class="float-label">Diffrattogramma</div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATI MATERIALI REALI
+// piani (hkl), d in Å, intensità relativa I/I0
+// sorgente: Cu Kα λ=1.5406 Å — 2θ calcolato con Bragg
+// ═══════════════════════════════════════════════════════
+const MATERIALS = {
+  'NaCl (alite)': {
+    system: 'Cubico — Fm3̄m',
+    a: 5.640,
+    color: '#60a5fa',
+    planes: [
+      {hkl:'111', d:3.257, I:15},
+      {hkl:'200', d:2.820, I:100},
+      {hkl:'220', d:1.994, I:55},
+      {hkl:'311', d:1.701, I:10},
+      {hkl:'222', d:1.628, I:5},
+      {hkl:'400', d:1.410, I:12},
+      {hkl:'420', d:1.261, I:8},
+      {hkl:'422', d:1.152, I:10},
+    ]
+  },
+  'Si (silicio)': {
+    system: 'Cubico — Fd3̄m',
+    a: 5.431,
+    color: '#34d399',
+    planes: [
+      {hkl:'111', d:3.135, I:100},
+      {hkl:'220', d:1.920, I:55},
+      {hkl:'311', d:1.637, I:30},
+      {hkl:'400', d:1.358, I:6},
+      {hkl:'331', d:1.246, I:11},
+      {hkl:'422', d:1.108, I:12},
+      {hkl:'511', d:1.045, I:18},
+    ]
+  },
+  'Al (alluminio)': {
+    system: 'Cubico — Fm3̄m',
+    a: 4.049,
+    color: '#a78bfa',
+    planes: [
+      {hkl:'111', d:2.338, I:100},
+      {hkl:'200', d:2.024, I:47},
+      {hkl:'220', d:1.431, I:22},
+      {hkl:'311', d:1.221, I:24},
+      {hkl:'222', d:1.169, I:7},
+      {hkl:'400', d:1.012, I:2},
+    ]
+  },
+  'Quarzo (SiO₂)': {
+    system: 'Trigonale — P3₁21',
+    a: 4.913,
+    color: '#fbbf24',
+    planes: [
+      {hkl:'100', d:4.257, I:16},
+      {hkl:'101', d:3.342, I:100},
+      {hkl:'110', d:2.457, I:8},
+      {hkl:'102', d:2.282, I:14},
+      {hkl:'111', d:2.237, I:8},
+      {hkl:'200', d:2.128, I:6},
+      {hkl:'201', d:1.980, I:4},
+      {hkl:'112', d:1.817, I:17},
+      {hkl:'202', d:1.671, I:4},
+      {hkl:'211', d:1.541, I:4},
+      {hkl:'203', d:1.382, I:6},
+      {hkl:'301', d:1.375, I:4},
+    ]
+  },
+  'TiO₂ (rutilo)': {
+    system: 'Tetragonale — P4₂/mnm',
+    a: 4.594,
+    color: '#f87171',
+    planes: [
+      {hkl:'110', d:3.247, I:100},
+      {hkl:'101', d:2.487, I:50},
+      {hkl:'200', d:2.297, I:10},
+      {hkl:'111', d:2.188, I:25},
+      {hkl:'210', d:2.054, I:10},
+      {hkl:'211', d:1.687, I:60},
+      {hkl:'220', d:1.624, I:20},
+      {hkl:'002', d:1.479, I:10},
+      {hkl:'310', d:1.452, I:10},
+      {hkl:'301', d:1.349, I:12},
+    ]
+  },
+  'FeO (wüstite)': {
+    system: 'Cubico — Fm3̄m',
+    a: 4.307,
+    color: '#fb923c',
+    planes: [
+      {hkl:'111', d:2.487, I:25},
+      {hkl:'200', d:2.154, I:100},
+      {hkl:'220', d:1.523, I:45},
+      {hkl:'311', d:1.299, I:20},
+      {hkl:'222', d:1.243, I:8},
+      {hkl:'400', d:1.077, I:10},
+    ]
+  },
+  // ── SILICATI ──────────────────────────────────────────
+  // NESOSILICATI (SiO4 isolati)
+  'Olivina Fo (nesosilicato)': {
+    system: 'Ortorombico — Pbnm',
+    a: 4.756, color: '#84cc16',
+    planes: [
+      {hkl:'021', d:5.148, I:30},
+      {hkl:'101', d:4.194, I:20},
+      {hkl:'120', d:3.632, I:80},
+      {hkl:'130', d:2.893, I:100},
+      {hkl:'131', d:2.777, I:40},
+      {hkl:'112', d:2.517, I:50},
+      {hkl:'140', d:2.369, I:30},
+      {hkl:'141', d:2.286, I:30},
+      {hkl:'221', d:2.162, I:20},
+      {hkl:'132', d:2.145, I:20},
+      {hkl:'042', d:1.769, I:20},
+    ]
+  },
+  // SOROSILICATI (Si2O7)
+  'Epidoto (sorosilicato)': {
+    system: 'Monoclino — P2₁/m',
+    a: 8.89, color: '#65a30d',
+    planes: [
+      {hkl:'001', d:7.527, I:30},
+      {hkl:'100', d:8.890, I:15},
+      {hkl:'011', d:4.592, I:100},
+      {hkl:'101', d:4.437, I:60},
+      {hkl:'110', d:5.022, I:40},
+      {hkl:'111', d:3.492, I:60},
+      {hkl:'201', d:2.898, I:40},
+      {hkl:'211', d:2.686, I:50},
+      {hkl:'002', d:3.763, I:30},
+      {hkl:'212', d:2.384, I:30},
+      {hkl:'301', d:2.232, I:20},
+    ]
+  },
+  // CICLOSILICATI (anelli Si6O18)
+  'Berillo (ciclosilicato)': {
+    system: 'Esagonale — P6/mcc',
+    a: 9.215, color: '#06b6d4',
+    planes: [
+      {hkl:'100', d:7.982, I:30},
+      {hkl:'001', d:9.192, I:20},
+      {hkl:'110', d:4.609, I:100},
+      {hkl:'101', d:5.170, I:60},
+      {hkl:'111', d:4.398, I:40},
+      {hkl:'200', d:3.991, I:25},
+      {hkl:'201', d:3.658, I:30},
+      {hkl:'210', d:3.022, I:40},
+      {hkl:'211', d:2.863, I:50},
+      {hkl:'300', d:2.661, I:30},
+      {hkl:'220', d:2.305, I:20},
+      {hkl:'112', d:2.867, I:35},
+    ]
+  },
+  // INOSILICATI — pirossenо (catena singola)
+  'Diopside (inosilicato-pirosseno)': {
+    system: 'Monoclino — C2/c',
+    a: 9.746, color: '#0ea5e9',
+    planes: [
+      {hkl:'110', d:4.456, I:100},
+      {hkl:'020', d:4.438, I:90},
+      {hkl:'111', d:3.869, I:70},
+      {hkl:'021', d:4.124, I:60},
+      {hkl:'220', d:2.993, I:50},
+      {hkl:'221', d:2.843, I:40},
+      {hkl:'130', d:2.978, I:35},
+      {hkl:'310', d:2.521, I:30},
+      {hkl:'131', d:2.530, I:25},
+      {hkl:'311', d:2.498, I:20},
+      {hkl:'040', d:2.219, I:25},
+    ]
+  },
+  // FILLOSILICATI (strati)
+  'Muscovite (fillosilicato)': {
+    system: 'Monoclino — C2/c',
+    a: 5.189, color: '#d97706',
+    planes: [
+      {hkl:'001', d:9.977, I:100},
+      {hkl:'002', d:4.989, I:80},
+      {hkl:'110', d:4.484, I:30},
+      {hkl:'111', d:4.113, I:30},
+      {hkl:'003', d:3.326, I:60},
+      {hkl:'112', d:3.736, I:25},
+      {hkl:'130', d:2.990, I:20},
+      {hkl:'004', d:2.494, I:40},
+      {hkl:'131', d:2.790, I:20},
+      {hkl:'005', d:1.995, I:20},
+      {hkl:'060', d:1.497, I:30},
+    ]
+  },
+  // TETTOSILICATI — feldspato (oltre quarzo già presente)
+  'Anortite (tettosilicato)': {
+    system: 'Triclino — P1̄',
+    a: 8.177, color: '#c084fc',
+    planes: [
+      {hkl:'001', d:6.385, I:30},
+      {hkl:'010', d:12.87, I:15},
+      {hkl:'110', d:4.040, I:100},
+      {hkl:'111', d:3.743, I:80},
+      {hkl:'130', d:3.216, I:60},
+      {hkl:'131', d:3.193, I:50},
+      {hkl:'220', d:3.195, I:40},
+      {hkl:'221', d:3.008, I:40},
+      {hkl:'040', d:3.218, I:30},
+      {hkl:'002', d:3.192, I:35},
+      {hkl:'200', d:4.089, I:20},
+    ]
+  },
+};
+
+// ═══════════════════════════════════════════════════════
+// STATO
+// ═══════════════════════════════════════════════════════
+let material = Object.keys(MATERIALS)[0];
+let geometry = 'bb';   // bb | tt | t2t
+let lambda   = 1.5406; // Å
+let scanSpeed = 2;      // °/s
+let twoTheta  = 5;      // angolo 2θ corrente (°)
+let scanning  = false;
+let scanInterval = null;
+const TWOTH_MIN = 5, TWOTH_MAX = 90;
+
+function getMaxTwoTheta() {
+  // θ-θ: sorgente e rivelatore salgono entrambi di θ → si incontrano a θ=45° → 2θ_max=90°
+  // BB e θ-2θ: rivelatore arriva a 90° dal fascio incidente → 2θ_max=90°
+  // In tutti i casi il limite fisico comune è 90°
+  return 90;
+}
+
+// diffrattogramma: array di {twoTh, intensity}
+let diffrData = [];
+// picchi identificati per la visualizzazione
+let foundPeaks = [];
+
+// ═══════════════════════════════════════════════════════
+// CANVAS
+// ═══════════════════════════════════════════════════════
+const cS  = document.getElementById('schema');
+const cD  = document.getElementById('diffr');
+const gS  = cS.getContext('2d');
+const gD  = cD.getContext('2d');
+
+function resize() {
+  [cS,cD].forEach(c => {
+    const r = c.getBoundingClientRect();
+    c.width  = Math.round(r.width);
+    c.height = Math.round(r.height);
+  });
+  drawSchema(); drawDiffr();
+}
+window.addEventListener('resize', resize);
+
+// ═══════════════════════════════════════════════════════
+// BRAGG  2d sinθ = nλ  →  θ = arcsin(nλ/2d)
+// ═══════════════════════════════════════════════════════
+function braggTwoTheta(d, lam, n=1) {
+  const sinTh = (n * lam) / (2 * d);
+  if (sinTh > 1) return null;
+  return 2 * Math.asin(sinTh) * 180 / Math.PI;
+}
+function braggD(twoTh_deg, lam) {
+  const th = twoTh_deg / 2 * Math.PI / 180;
+  return lam / (2 * Math.sin(th));
+}
+
+// Intensità modellata come picco lorentziano
+function intensity(twoTh) {
+  const mat = MATERIALS[material];
+  let total = 0;
+  for (const p of mat.planes) {
+    const t2 = braggTwoTheta(p.d, lambda);
+    if (t2 === null) continue;
+    const w = 0.15; // larghezza mezza altezza (°)
+    const dt = twoTh - t2;
+    total += (p.I / 100) * (w*w) / (dt*dt + w*w);
+  }
+  return Math.min(1, total);
+}
+
+// ═══════════════════════════════════════════════════════
+// LIMITI ANGOLARI per geometria
+// BB  (campione θ, rivelatore 2θ): 2θ max = 90° (rivelatore perp. alla sorgente)
+// θ-θ (sorgente e rivelatore salgono di θ): limite quando si sovrappongono → 2θ max = 90° (θ=45°)
+// θ-2θ: identico a BB, 2θ max = 90°
+// ═══════════════════════════════════════════════════════
+function getTwoThetaMax() {
+  return geometry === 'tt' ? 90 : 90; // tutti 90° (θ-θ limite fisico θ<45° → 2θ<90°)
+}
+
+// ═══════════════════════════════════════════════════════
+// DISEGNO SCHEMA OTTICO — geometria pulita con rette
+// ═══════════════════════════════════════════════════════
+function drawSchema() {
+  const W = cS.width, H = cS.height;
+  gS.clearRect(0, 0, W, H);
+  gS.fillStyle = '#060d1a';
+  gS.fillRect(0, 0, W, H);
+
+  const toRad = a => a * Math.PI / 180;
+  const th  = twoTheta / 2;
+  const th2 = twoTheta;
+
+  // Centro campione al centro del canvas
+  const sx = W * 0.50;
+  const sy = H * 0.54;
+  const R  = Math.min(W * 0.40, H * 0.42);
+
+  // ── Cerchio goniometro ──
+  gS.beginPath();
+  gS.arc(sx, sy, R, 0, Math.PI*2);
+  gS.strokeStyle = '#4a7090';
+  gS.lineWidth = 1;
+  gS.setLineDash([4,6]);
+  gS.stroke();
+  gS.setLineDash([]);
+
+  // ── Linea orizzontale di riferimento ──
+  gS.strokeStyle = '#4a7090';
+  gS.lineWidth = 1;
+  gS.beginPath();
+  gS.moveTo(sx - R - 20, sy);
+  gS.lineTo(sx + R + 20, sy);
+  gS.stroke();
+
+  // ── Posizioni sorgente e rivelatore ──
+  // Convenzione matematica: 0°=destra, antiorario positivo
+  // Canvas: y verso il basso → usiamo -sin per convertire
+  //
+  // BB  : sorgente fissa a 180° (sinistra), rivelatore a (180°-2θ)
+  //       θ cresce → rivelatore sale verso l'alto (angolo decresce da 180° verso 0°)
+  //       2θ = angolo dal fascio trasmesso (0°=destra) al rivelatore
+  //
+  // θ-θ : campione fisso, sorgente sale di θ sopra l'asse (→180°+θ),
+  //       rivelatore sale di θ sopra l'asse destro (→0°-θ = -θ = 360°-θ)
+  //       Entrambi si alzano simmetricamente, 2θ = angolo tra loro misurato dall'alto
+  //
+  // θ-2θ: identico a BB (sorgente fissa, campione ruota θ, rivelatore 2θ)
+
+  let srcAngle, detAngle;
+
+  if (geometry === 'tt') {
+    srcAngle = 180 + th;   // sorgente sale sopra l'asse sinistro
+    detAngle = 360 - th;   // rivelatore sale sopra l'asse destro (= -th)
+  } else {
+    // bb e t2t
+    srcAngle = 180;
+    detAngle = 180 - th2;  // cresce da 180° verso 0° al crescere di 2θ → posizione corretta
+  }
+
+  const srcX = sx + R * Math.cos(toRad(srcAngle));
+  const srcY = sy - R * Math.sin(toRad(srcAngle));
+  const detX = sx + R * Math.cos(toRad(detAngle));
+  const detY = sy - R * Math.sin(toRad(detAngle));
+
+  // ── Asse del campione (linea tratteggiata attraverso il campione) ──
+  // In BB/θ-2θ ruota di θ; in θ-θ è orizzontale
+  const sampleAxisAngle = (geometry === 'tt') ? 0 : -toRad(th);
+  const axisLen = R * 0.55;
+  gS.strokeStyle = '#475569aa';
+  gS.lineWidth = 1;
+  gS.setLineDash([5, 4]);
+  gS.beginPath();
+  gS.moveTo(sx - axisLen * Math.cos(sampleAxisAngle), sy - axisLen * Math.sin(sampleAxisAngle));
+  gS.lineTo(sx + axisLen * Math.cos(sampleAxisAngle), sy + axisLen * Math.sin(sampleAxisAngle));
+  gS.stroke();
+  gS.setLineDash([]);
+
+  // ── Campione ──
+  drawPowderSample(gS, sx, sy, th, geometry);
+
+  // ── Fascio incidente ──
+  drawRay(gS, srcX, srcY, sx, sy, '#fbbf24', true);
+
+  // ── Fascio diffratto ──
+  const mat = MATERIALS[material];
+  const nearPeak = mat.planes.some(p => {
+    const t2 = braggTwoTheta(p.d, lambda);
+    return t2 !== null && Math.abs(twoTheta - t2) < 0.4;
+  });
+  drawRay(gS, sx, sy, detX, detY, nearPeak ? '#34d399' : '#1e3a5f80', nearPeak);
+
+  // ── Sorgente e Rivelatore ──
+  drawSourceBox(gS, srcX, srcY, srcAngle);
+  drawDetectorBox(gS, detX, detY, detAngle);
+
+  // ── Angoli (archi crescenti) ──
+  drawAnglesClean(gS, sx, sy, R, th, th2, srcAngle, detAngle);
+
+  // ── Info ──
+  gS.fillStyle = '#ffffff';
+  gS.font = '600 10px Inter';
+  gS.textAlign = 'left';
+  gS.textBaseline = 'bottom';
+  gS.fillText(`Geometria: ${geometry==='bb'?'Bragg-Brentano (θ/2θ)':'θ-θ (campione fisso)'}`, 8, H - 4);
+  gS.fillStyle = '#fbbf2460';
+  gS.font = '10px JetBrains Mono';
+  gS.textBaseline = 'top';
+  gS.fillText(`λ = ${lambda} Å`, 8, 6);
+}
+
+// ── Campione: rettangolo che ruota in BB e θ-2θ, fisso in θ-θ ──
+function drawPowderSample(g, cx, cy, theta_deg, geo) {
+  const mat = MATERIALS[material];
+  const toRad = a => a * Math.PI / 180;
+
+  const rw = 48, rh = 10;
+  // In BB e θ-2θ il campione ruota di θ (antiorario = negativo nel canvas)
+  const rot = (geo === 'tt') ? 0 : -toRad(theta_deg);
+
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(rot);
+
+  // Corpo rettangolo
+  g.fillStyle = mat.color + '25';
+  g.strokeStyle = mat.color;
+  g.lineWidth = 1.8;
+  g.beginPath();
+  g.roundRect(-rw/2, -rh/2, rw, rh, 3);
+  g.fill(); g.stroke();
+
+  // Piani reticolari interni (orizzontali nel riferimento del campione)
+  g.strokeStyle = mat.color + 'bb';
+  g.lineWidth = 0.7;
+  g.setLineDash([3, 3]);
+  const nPiani = 3, spacing = rh * 0.7 / nPiani;
+  for (let k = -nPiani; k <= nPiani; k++) {
+    const yp = k * spacing;
+    if (Math.abs(yp) >= rh / 2) continue;
+    g.beginPath(); g.moveTo(-rw/2 + 3, yp); g.lineTo(rw/2 - 3, yp); g.stroke();
+  }
+  g.setLineDash([]);
+
+  g.restore();
+
+  // Label sotto (fuori dalla rotazione, sempre orizzontale)
+  const labelY = cy + rh/2 + 14;
+  g.fillStyle = '#ffffff'; g.font = '9px Inter';
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  g.fillText(geo === 'tt' ? 'campione fisso' : 'campione rotante', cx, cy + rh/2 + 3);
+  g.fillStyle = mat.color + 'aa'; g.font = '8px Inter';
+  g.fillText(material.split(' ')[0], cx, labelY);
+}
+
+// ── Raggio come retta con freccia ──
+function drawRay(g, x1, y1, x2, y2, color, active) {
+  const dx = x2-x1, dy = y2-y1;
+  const len = Math.sqrt(dx*dx+dy*dy);
+  const ux = dx/len, uy = dy/len;
+
+  g.shadowColor = active ? color : 'transparent';
+  g.shadowBlur  = active ? 8 : 0;
+  g.strokeStyle = color;
+  g.lineWidth   = active ? 2 : 1;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke();
+  g.shadowBlur = 0;
+
+  if (active) {
+    // freccia al 60% del percorso
+    const ax = x1+dx*0.6, ay = y1+dy*0.6;
+    const al=10, aw=0.35;
+    g.beginPath();
+    g.moveTo(ax, ay);
+    g.lineTo(ax - al*(ux*Math.cos(aw)-uy*Math.sin(aw)), ay - al*(uy*Math.cos(aw)+ux*Math.sin(aw)));
+    g.lineTo(ax - al*(ux*Math.cos(-aw)-uy*Math.sin(-aw)), ay - al*(uy*Math.cos(-aw)+ux*Math.sin(-aw)));
+    g.closePath();
+    g.fillStyle = color;
+    g.fill();
+  }
+}
+
+// ── Sorgente XRD ──
+function drawSourceBox(g, x, y, angle_deg) {
+  const toRad = a => a * Math.PI / 180;
+  g.save();
+  g.translate(x, y);
+  // orientato verso il centro
+  g.rotate(-toRad(angle_deg) + Math.PI);
+  g.fillStyle = '#0f2a4a';
+  g.strokeStyle = '#fbbf24';
+  g.lineWidth = 1.5;
+  g.beginPath(); g.roundRect(-14, -9, 28, 18, 3); g.fill(); g.stroke();
+  g.fillStyle = '#fbbf24';
+  g.font = 'bold 10px Inter';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('X', 0, 0);
+  g.restore();
+  // label fuori dal cerchio
+  const lx = x + 26 * Math.cos(toRad(angle_deg));
+  const ly = y - 26 * Math.sin(toRad(angle_deg));
+  g.fillStyle = '#fbbf24cc';
+  g.font = '600 9px Inter';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('Sorgente', lx, ly);
+}
+
+// ── Rivelatore ──
+function drawDetectorBox(g, x, y, angle_deg) {
+  const toRad = a => a * Math.PI / 180;
+  g.save();
+  g.translate(x, y);
+  g.rotate(-toRad(angle_deg) - Math.PI/2);
+  g.fillStyle = '#0f2a4a';
+  g.strokeStyle = '#34d399';
+  g.lineWidth = 1.5;
+  g.beginPath(); g.roundRect(-8,-16,16,32,3); g.fill(); g.stroke();
+  g.fillStyle = '#34d39950';
+  g.beginPath(); g.roundRect(-5,-10,10,20,2); g.fill();
+  g.restore();
+  const lx = x + 26 * Math.cos(toRad(angle_deg));
+  const ly = y - 26 * Math.sin(toRad(angle_deg));
+  g.fillStyle = '#34d399cc';
+  g.font = '600 9px Inter';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('Rivelatore', lx, ly);
+}
+
+// ── Archi angolari ──
+// Gli archi θ sono misurati rispetto all'ASSE DEL CAMPIONE (non all'orizzontale).
+//
+// BB / θ-2θ:
+//   - Il campione ruota di θ → asse campione = -toRad(th) nel canvas
+//   - Raggio incidente arriva da sinistra (angolo canvas = -π → direzione verso campione = 0)
+//   - θ è tra l'asse campione e il raggio incidente → quadrante ALTO DESTRA ✓
+//   - 2θ tra sorgente e rivelatore (grande arco superiore) ✓
+//
+// θ-θ:
+//   - Campione fisso, asse campione = 0 (orizzontale)
+//   - Sorgente in alto-sinistra: raggio incidente arriva da angolo canvas = -π - toRad(th)
+//     → direzione verso campione = -toRad(th) (in basso rispetto all'asse = quadrante BASSO SINISTRA) ✓
+//   - Rivelatore in alto-destra: angolo canvas = -toRad(th)
+//     → quadrante BASSO DESTRA rispetto all'asse campione ✓
+//
+function drawAnglesClean(g, sx, sy, R, th, th2, srcAngle, detAngle) {
+  const toRad = a => a * Math.PI / 180;
+  const arcR2  = R * 0.44;
+  const arcRth = R * 0.24;
+
+  if (geometry === 'tt') {
+    // Asse campione orizzontale = angolo canvas 0 (destra) e π (sinistra)
+    // Sorgente: angolo canvas = -π - toRad(th) (alto sinistra)
+    // Raggio incidente arriva DA quella direzione → nel campione punta VERSO la sorgente
+    // angolo canvas della direzione verso sorgente = -π - toRad(th)
+    // L'asse campione verso sinistra = π (o -π)
+    // Arco θ giallo: tra asse campione sinistro (π) e direzione sorgente (-π - toRad(th))
+    // Nel canvas (y verso basso) la sorgente è in ALTO-SINISTRA → angolo canvas NEGATIVO oltre -π
+    // L'arco è in basso rispetto all'asse → angolo canvas > π → usiamo π a π+th
+    // arc da π a π+toRad(th), anticlockwise=false = orario canvas = verso il basso ✓
+    g.strokeStyle = '#fbbf24cc';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(sx, sy, arcRth, Math.PI, Math.PI - toRad(th), true);
+    g.stroke();
+    const midSrc = Math.PI - toRad(th * 0.5);
+    g.fillStyle = '#fbbf24';
+    g.font = 'bold 11px JetBrains Mono';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('θ', sx + (arcRth + 14) * Math.cos(midSrc),
+                    sy + (arcRth + 14) * Math.sin(midSrc));
+
+    // Arco θ verde: tra asse campione destro (0) e direzione rivelatore
+    // Rivelatore è in ALTO-DESTRA → angolo canvas = -toRad(th) (negativo = sopra)
+    // L'arco è in basso rispetto all'asse → da 0 verso positivo (= sotto nel canvas)
+    // arc da 0 a toRad(th), anticlockwise=false = orario canvas = verso il basso ✓
+    g.strokeStyle = '#34d399cc';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(sx, sy, arcRth, 0, toRad(th), false);
+    g.stroke();
+    const midDet = toRad(th * 0.5);
+    g.fillStyle = '#34d399';
+    g.fillText('θ', sx + (arcRth + 14) * Math.cos(midDet),
+                    sy + (arcRth + 14) * Math.sin(midDet));
+
+  } else {
+    // BB e θ-2θ
+    // Asse campione ruotato di θ verso l'alto → angolo canvas = -toRad(th)
+    // Lato destro dell'asse campione = -toRad(th)
+    // Raggio incidente arriva da sinistra (-π) → direzione verso campione = 0 (destra)
+    // Arco θ: tra asse campione destro (-toRad(th)) e asse orizzontale destro (0)
+    // Quadrante ALTO DESTRA: arc da -toRad(th) a 0, anticlockwise=false (orario canvas = sopra) ✓
+    g.strokeStyle = '#fbbf24cc';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(sx, sy, arcRth, -toRad(th), 0, false);
+    g.stroke();
+    const midTh = -toRad(th * 0.5);
+    g.fillStyle = '#fbbf24';
+    g.font = 'bold 11px JetBrains Mono';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('θ', sx + (arcRth + 14) * Math.cos(midTh),
+                    sy + (arcRth + 14) * Math.sin(midTh));
+
+    // Arco 2θ: da sorgente a rivelatore, semicerchio superiore
+    g.strokeStyle = '#38bdf8cc';
+    g.lineWidth = 2.5;
+    g.beginPath();
+    g.arc(sx, sy, arcR2, -Math.PI, toRad(th2) - Math.PI, false);
+    g.stroke();
+    const mid2 = toRad(th2 * 0.5) - Math.PI;
+    g.fillStyle = '#38bdf8';
+    g.font = 'bold 12px JetBrains Mono';
+    g.fillText('2θ', sx + (arcR2 + 16) * Math.cos(mid2),
+                     sy + (arcR2 + 16) * Math.sin(mid2));
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// DISEGNO DIFFRATTOGRAMMA
+// ═══════════════════════════════════════════════════════
+function drawDiffr() {
+  const W = cD.width, H = cD.height;
+  gD.clearRect(0, 0, W, H);
+  gD.fillStyle = '#060d1a';
+  gD.fillRect(0, 0, W, H);
+
+  const margin = {top:20, bottom:36, left:52, right:20};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  // Scala
+  const xMap = t2 => margin.left + (t2 - TWOTH_MIN) / (TWOTH_MAX - TWOTH_MIN) * pw;
+  const yMap = i  => margin.top  + ph - i * ph;
+
+  // Griglia
+  gD.strokeStyle = '#1e293b';
+  gD.lineWidth = 1;
+  for (let t = 10; t <= 90; t += 10) {
+    const x = xMap(t);
+    gD.beginPath(); gD.moveTo(x, margin.top); gD.lineTo(x, margin.top + ph); gD.stroke();
+    gD.fillStyle = '#ffffff'; gD.font = '10px JetBrains Mono';
+    gD.textAlign = 'center';
+    gD.fillText(t+'°', x, margin.top + ph + 14);
+  }
+  for (let v = 0; v <= 1; v += 0.25) {
+    const y = yMap(v);
+    gD.beginPath(); gD.moveTo(margin.left, y); gD.lineTo(margin.left + pw, y); gD.stroke();
+    if (v === 1 || v === 0.5) {
+      gD.fillStyle = '#ffffff'; gD.font = '10px JetBrains Mono';
+      gD.textAlign = 'right';
+      gD.fillText(v===1?'I₀':'½I₀', margin.left - 4, y + 4);
+    }
+  }
+
+  // Assi
+  gD.strokeStyle = '#475569'; gD.lineWidth = 1.5;
+  gD.beginPath(); gD.moveTo(margin.left, margin.top); gD.lineTo(margin.left, margin.top+ph); gD.stroke();
+  gD.beginPath(); gD.moveTo(margin.left, margin.top+ph); gD.lineTo(margin.left+pw, margin.top+ph); gD.stroke();
+
+  // Label assi
+  gD.fillStyle = '#c8d0e0'; gD.font = '11px Inter';
+  gD.textAlign = 'center';
+  gD.fillText('2θ (°)', margin.left + pw/2, H - 4);
+  gD.save(); gD.translate(13, margin.top + ph/2); gD.rotate(-Math.PI/2);
+  gD.fillText('Intensità', 0, 0); gD.restore();
+
+  // Picchi attesi (linee verticali grigie in background)
+  const mat = MATERIALS[material];
+  for (const p of mat.planes) {
+    const t2 = braggTwoTheta(p.d, lambda);
+    if (t2 === null || t2 < TWOTH_MIN || t2 > TWOTH_MAX) continue;
+    const x = xMap(t2);
+    gD.strokeStyle = '#334155';
+    gD.lineWidth = 1;
+    gD.setLineDash([2,3]);
+    gD.beginPath(); gD.moveTo(x, margin.top); gD.lineTo(x, margin.top+ph); gD.stroke();
+    gD.setLineDash([]);
+    // hkl label
+    gD.fillStyle = '#ffffff'; gD.font = '9px JetBrains Mono';
+    gD.textAlign = 'center';
+    gD.fillText(p.hkl, x, margin.top + 10);
+  }
+
+  // Diffrattogramma tracciato finora
+  if (diffrData.length > 1) {
+    // Glow
+    gD.shadowColor = mat.color;
+    gD.shadowBlur = 6;
+    gD.strokeStyle = mat.color;
+    gD.lineWidth = 1.8;
+    gD.beginPath();
+    let started = false;
+    for (const pt of diffrData) {
+      const x = xMap(pt.t2), y = yMap(pt.i);
+      if (!started) { gD.moveTo(x,y); started=true; }
+      else gD.lineTo(x,y);
+    }
+    gD.stroke();
+    gD.shadowBlur = 0;
+
+    // Area
+    gD.beginPath();
+    started = false;
+    for (const pt of diffrData) {
+      const x = xMap(pt.t2), y = yMap(pt.i);
+      if (!started) { gD.moveTo(x, margin.top+ph); gD.lineTo(x,y); started=true; }
+      else gD.lineTo(x,y);
+    }
+    const lastPt = diffrData[diffrData.length-1];
+    gD.lineTo(xMap(lastPt.t2), margin.top+ph);
+    gD.closePath();
+    gD.fillStyle = mat.color + '18';
+    gD.fill();
+  }
+
+  // Cursore posizione corrente
+  if (twoTheta >= TWOTH_MIN && twoTheta <= TWOTH_MAX) {
+    const x = xMap(twoTheta);
+    gD.strokeStyle = '#38bdf8';
+    gD.lineWidth = 1.5;
+    gD.setLineDash([3,3]);
+    gD.beginPath(); gD.moveTo(x, margin.top); gD.lineTo(x, margin.top+ph); gD.stroke();
+    gD.setLineDash([]);
+    // Dot
+    const curI = intensity(twoTheta);
+    gD.beginPath(); gD.arc(x, yMap(curI), 4, 0, Math.PI*2);
+    gD.fillStyle = '#38bdf8';
+    gD.shadowColor = '#38bdf8'; gD.shadowBlur = 10;
+    gD.fill(); gD.shadowBlur = 0;
+  }
+
+  // Etichette picchi trovati
+  for (const pk of foundPeaks) {
+    if (pk.t2 < TWOTH_MIN || pk.t2 > TWOTH_MAX) continue;
+    const x = xMap(pk.t2);
+    gD.fillStyle = '#f87171';
+    gD.font = 'bold 9px JetBrains Mono';
+    gD.textAlign = 'center';
+    gD.fillText(pk.hkl, x, yMap(pk.i) - 10);
+    // stellina
+    gD.font = '10px sans-serif';
+    gD.fillText('▲', x, yMap(pk.i) - 1);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// AGGIORNA LETTURA + TABELLA
+// ═══════════════════════════════════════════════════════
+function updateReadout() {
+  const th  = twoTheta / 2;
+  const d   = braggD(twoTheta, lambda);
+  const i   = intensity(twoTheta);
+
+  document.getElementById('readTwoTh').textContent = twoTheta.toFixed(2) + '°';
+  document.getElementById('readTh').textContent    = th.toFixed(2) + '°';
+  document.getElementById('readD').textContent     = d.toFixed(4);
+  document.getElementById('readI').textContent     = (i * 100).toFixed(1) + '%';
+  document.getElementById('manSlider').value       = twoTheta;
+  document.getElementById('twoThVal').textContent  = twoTheta.toFixed(1) + '°';
+
+  // Identifica picco vicino
+  const mat = MATERIALS[material];
+  let nearLabel = '';
+  for (const p of mat.planes) {
+    const t2 = braggTwoTheta(p.d, lambda);
+    if (t2 !== null && Math.abs(twoTheta - t2) < 0.35) {
+      nearLabel = `↑ Picco (${p.hkl}): d=${p.d} Å`;
+    }
+  }
+  document.getElementById('readPeak').textContent = nearLabel;
+
+  // Aggiorna tabella
+  const tbody = document.getElementById('peakTbody');
+  tbody.innerHTML = '';
+  for (const p of mat.planes) {
+    const t2 = braggTwoTheta(p.d, lambda);
+    if (t2 === null) continue;
+    const tr = document.createElement('tr');
+    const isActive = Math.abs(twoTheta - t2) < 0.35;
+    if (isActive) tr.className = 'active-row';
+    tr.innerHTML = `<td>${p.hkl}</td><td>${p.d.toFixed(3)}</td><td>${t2.toFixed(2)}</td><td>${p.I}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SCANSIONE
+// ═══════════════════════════════════════════════════════
+const SCAN_DT = 50; // ms
+
+function doScanStep() {
+  const maxT2 = getMaxTwoTheta();
+  const step = scanSpeed * SCAN_DT / 1000;
+  twoTheta = Math.min(maxT2, twoTheta + step);
+
+  const i = intensity(twoTheta);
+  diffrData.push({t2: twoTheta, i});
+
+  // Individua picchi (solo al primo superamento con alta intensità)
+  const mat = MATERIALS[material];
+  for (const p of mat.planes) {
+    const t2 = braggTwoTheta(p.d, lambda);
+    if (t2 === null) continue;
+    if (Math.abs(twoTheta - t2) < step * 1.5 && i > 0.05) {
+      if (!foundPeaks.find(pk => pk.hkl === p.hkl)) {
+        foundPeaks.push({hkl: p.hkl, t2, i: p.I/100});
+      }
+    }
+  }
+
+  updateReadout();
+  drawSchema();
+  drawDiffr();
+
+  if (twoTheta >= getMaxTwoTheta()) stopScan();
+}
+
+function startScan() {
+  scanning = true;
+  document.getElementById('btnScan').textContent = '⏸ Pausa';
+  document.getElementById('btnScan').classList.remove('primary');
+  scanInterval = setInterval(doScanStep, SCAN_DT);
+}
+function stopScan() {
+  scanning = false;
+  clearInterval(scanInterval);
+  document.getElementById('btnScan').textContent = '▶ Scansione automatica';
+  document.getElementById('btnScan').classList.add('primary');
+}
+function resetAll() {
+  stopScan();
+  twoTheta = TWOTH_MIN;
+  diffrData = [];
+  foundPeaks = [];
+  updateReadout();
+  drawSchema();
+  drawDiffr();
+}
+
+document.getElementById('btnScan').addEventListener('click', () => {
+  if (scanning) stopScan(); else { if (twoTheta >= getMaxTwoTheta()) resetAll(); startScan(); }
+});
+document.getElementById('btnReset').addEventListener('click', resetAll);
+
+// Slider manuale
+document.getElementById('manSlider').addEventListener('input', e => {
+  stopScan();
+  twoTheta = parseFloat(e.target.value);
+  // Aggiungi punto se non già presente
+  if (!diffrData.find(d => Math.abs(d.t2 - twoTheta) < 0.05)) {
+    diffrData.push({t2: twoTheta, i: intensity(twoTheta)});
+    diffrData.sort((a,b) => a.t2 - b.t2);
+  }
+  updateReadout(); drawSchema(); drawDiffr();
+});
+
+document.getElementById('speedSlider').addEventListener('input', e => {
+  scanSpeed = parseFloat(e.target.value);
+  document.getElementById('speedVal').textContent = scanSpeed + '°/s';
+  if (scanning) { stopScan(); startScan(); }
+});
+
+// Geometria
+document.querySelectorAll('.geo-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.geo-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    geometry = btn.dataset.geo;
+    drawSchema();
+  });
+});
+
+// Materiale
+const matSel = document.getElementById('matSel');
+Object.keys(MATERIALS).forEach(k => {
+  const o = document.createElement('option');
+  o.value = k; o.textContent = k;
+  matSel.appendChild(o);
+});
+matSel.addEventListener('change', e => {
+  material = e.target.value;
+  resetAll();
+  updatePlanInfo();
+});
+
+// Sorgente
+document.getElementById('srcSel').addEventListener('change', e => {
+  lambda = parseFloat(e.target.value);
+  resetAll();
+  updatePlanInfo();
+});
+
+function updatePlanInfo() {
+  updateReadout();
+  drawSchema();
+  drawDiffr();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+setTimeout(() => {
+  resize();
+  updateReadout();
+}, 80);
+</script>
+</body>
+</html>
