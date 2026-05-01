@@ -96,7 +96,7 @@ La diffrazione a raggi X è una tecnica fondamentale per la determinazione della
 
 ## Autore
 
-Simulazioni sviluppate con l'assistenza di Claude (Anthropic).
+Giovanni Montini con il supporto di Claude (Anthropic).
 
 ## Licenza
 
