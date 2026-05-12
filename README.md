@@ -44,7 +44,6 @@ La simulazione mostra la connessione tra il **moto circolare uniforme** (piano f
 - Visualizzazione opzionale dei vettori sull'asse x del piano fasoriale
 - Marcatori verticali nel grafico temporale al cambio di parametri
 - Forma trigonometrica e fasoriale aggiornate in tempo reale
-- Continuità della simulazione anche con la finestra in background
 - Layout responsive (PC e mobile)
 
 ---
@@ -104,13 +103,13 @@ Simulazione animata del principio fisico dell'**Interferometria Radar Differenzi
 
 ### Contenuto
 
-Il DInSAR si basa sul confronto della fase delle onde radar ricevute in due acquisizioni successive (T1 e T2) dello stesso bersaglio. La differenza di fase è legata allo spostamento del bersaglio lungo la linea di vista (LOS) dalla relazione:
+Il DInSAR si basa sul confronto della fase delle onde radar ricevute in due acquisizioni successive (T1 e T2) dello stesso bersaglio. La differenza di fase è legata allo spostamento del bersaglio lungo la linea di vista (LOS):
 
 ```
 Δφ = 4π · Δd / λ   →   Δd = λ · Δφ / (4π)
 ```
 
-dove λ è la lunghezza d'onda del radar e Δd lo spostamento lungo la LOS. L'ambiguità intrinseca è ±n·λ/2 (spostamenti multipli di λ/2 producono la stessa differenza di fase).
+L'ambiguità intrinseca è ±n·λ/2 (spostamenti multipli di λ/2 producono la stessa differenza di fase).
 
 ### Struttura della simulazione
 
@@ -121,7 +120,7 @@ L'animazione si articola in sei fasi sequenziali:
 3. **Transizione**: dissolvenza di T1
 4. **T2 — emissione**: seconda acquisizione; il bersaglio si è spostato di Δd lungo la LOS
 5. **T2 — ritorno**: l'onda di ritorno porta la fase φ₂ = (4πR₂/λ) mod 2π, diversa da φ₁
-6. **Confronto**: le due onde di ritorno vengono sovrapposte; la differenza di fase Δφ è evidenziata graficamente con la distanza tra le creste e la formula di conversione in spostamento
+6. **Confronto**: le due onde di ritorno vengono sovrapposte; Δφ è evidenziato graficamente con la distanza tra le creste e la formula di conversione in spostamento
 
 ### Layout
 
@@ -136,100 +135,6 @@ L'animazione si articola in sei fasi sequenziali:
 - Angolo di incidenza LOS: 35°
 - Baseline orbitale: 0 m (per semplicità didattica)
 - Spostamento del bersaglio Δd: regolabile con slider (−14 ÷ +14 cm)
-
----
-
-## Autore
-
-Simulazioni sviluppate da Giovanni Montini con l'assistenza di Claude (Anthropic).
-
-## Licenza
-
-Libero uso per scopi didattici e divulgativi.
-
-
----
-
-## 🌀 Moto Armonico Periodico
-
-**File:** `moto_armonico.html`
-
-Simulazione interattiva del moto armonico periodico, con rappresentazione simultanea del piano fasoriale e dell'andamento temporale.
-
-### Contenuto
-
-Il moto armonico è descritto dall'equazione:
-
-```
-x(t) = A · cos(ωt + φ₀)
-```
-
-La simulazione mostra la connessione tra il **moto circolare uniforme** (piano fasoriale) e il **moto armonico** (proiezione sull'asse reale), permettendo di visualizzare le tre grandezze cinematiche normalizzate:
-
-- **Spostamento** x(t) = cos(ωt + φ₀)
-- **Velocità** v(t) = −sin(ωt + φ₀)
-- **Accelerazione** a(t) = −cos(ωt + φ₀)
-
-### Funzionalità
-
-- Regolazione interattiva di **frequenza** (0.2–4 Hz), **ampiezza** e **fase iniziale** tramite slider
-- Selezione del parametro da visualizzare nel grafico temporale (spostamento, velocità, accelerazione) con radio button
-- Fasore rotante che cambia direzione in base al parametro selezionato:
-  - Posizione → radiale
-  - Velocità → tangenziale (+90°)
-  - Accelerazione → centripeta (verso il centro)
-- Visualizzazione opzionale dei vettori sull'asse x del piano fasoriale
-- Marcatori verticali nel grafico temporale al cambio di parametri
-- Forma trigonometrica e fasoriale aggiornate in tempo reale
-- Continuità della simulazione anche con la finestra in background
-- Layout responsive (PC e mobile)
-
----
-
-## ⚛️ Diffrattometro XRD
-
-**File:** `diffrattometro_xrd_v5.html`
-
-Simulazione interattiva di un diffrattometro a raggi X per polveri, basata sulla **legge di Bragg**:
-
-```
-nλ = 2d · sin(θ)
-```
-
-### Contenuto
-
-La diffrazione a raggi X è una tecnica fondamentale per la determinazione della struttura cristallina dei minerali e dei materiali. Quando un fascio di raggi X colpisce un campione policristallino, i piani reticolari con spaziatura *d* soddisfano la condizione di Bragg per un angolo θ specifico, generando un picco di diffrazione a 2θ nel diffrattogramma.
-
-### Materiali inclusi
-
-| Materiale | Sistema cristallino | Gruppo |
-|-----------|-------------------|--------|
-| NaCl (alite) | Cubico — Fm3̄m | — |
-| Si (silicio) | Cubico — Fd3̄m | — |
-| Al (alluminio) | Cubico — Fm3̄m | — |
-| Quarzo (SiO₂) | Trigonale — P3₁21 | Tettosilicato |
-| TiO₂ (rutilo) | Tetragonale — P4₂/mnm | — |
-| FeO (wüstite) | Cubico — Fm3̄m | — |
-| Olivina Fo | Ortorombico — Pbnm | Nesosilicato |
-| Epidoto | Monoclino — P2₁/m | Sorosilicato |
-| Berillo | Esagonale — P6/mcc | Ciclosilicato |
-| Diopside | Monoclino — C2/c | Inosilicato (pirosseno) |
-| Muscovite | Monoclino — C2/c | Fillosilicato |
-| Anortite | Triclino — P1̄ | Tettosilicato (feldspato) |
-
-### Funzionalità
-
-- **Schema ottico** con sorgente, campione e rivelatore in geometria reale
-- Due geometrie selezionabili:
-  - **Bragg-Brentano** (θ/2θ): campione rotante, sorgente fissa
-  - **θ-θ**: campione fisso, sorgente e rivelatore si muovono simmetricamente
-- Quattro sorgenti disponibili: Cu Kα, Mo Kα, Co Kα, Cr Kα (lunghezze d'onda reali)
-- **Diffrattogramma** costruito in tempo reale durante la scansione automatica o manuale
-- Tabella dei picchi attesi con indici di Miller (hkl), spaziatura d e intensità relativa I/I₀
-- Identificazione automatica dei picchi con etichette hkl
-- Campione rappresentato come rettangolo rotante (BB) o fisso (θ-θ) con piani reticolari visibili
-- Angoli θ e 2θ visualizzati come archi crescenti sul goniometro
-- Layout responsive (PC: schema e diffrattogramma affiancati; mobile: verticale)
 
 ---
 
@@ -263,7 +168,7 @@ La visibilità di un versante da satellite dipende dall'orientazione della super
 
 ## Autore
 
-Simulazioni sviluppate da Giovanni Montini con l'assistenza di Claude (Anthropic).
+Simulazioni sviluppate con l'assistenza di Claude (Anthropic).
 
 ## Licenza
 
