@@ -140,7 +140,7 @@ L'animazione si articola in sei fasi sequenziali:
 
 ## Autore
 
-Simulazioni sviluppate con l'assistenza di Claude (Anthropic).
+Giovanni Montini con l'assistenza di Claude (Anthropic).
 
 ## Licenza
 
