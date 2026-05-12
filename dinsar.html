@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>DInSAR — Interferometria Radar Differenziale</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04080f;--bg2:#080f1a;--panel:#0c1525;--border:#1a2d4a;
+  --text:#d0e4ff;--muted:#5a7a9a;
+  --t1:#00d4ff;--t2:#ff6b35;--diff:#b4ff6b;--acc:#7c5cff;--gold:#ffd166;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow:hidden}
+body{display:flex;flex-direction:column}
+header{flex-shrink:0;padding:0.45rem 1.2rem;background:#020609;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+header h1{font-size:0.88rem;font-weight:700;letter-spacing:0.05em;color:var(--t1)}
+header h1 em{color:var(--text);font-weight:400;font-style:normal}
+.formula{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--gold);
+  background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.6rem}
+.main{display:flex;flex:1;min-height:0}
+/* SIDEBAR */
+.sb{width:200px;flex-shrink:0;background:#020609;border-right:1px solid var(--border);
+  padding:0.75rem;display:flex;flex-direction:column;gap:0.8rem;overflow-y:auto}
+.sl{font-size:0.58rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:0.18rem}
+.cr{display:flex;flex-direction:column;gap:0.15rem}
+.ch{display:flex;justify-content:space-between;font-size:0.67rem;font-weight:600;color:var(--text)}
+.cv{font-family:'Space Mono',monospace;color:var(--gold);font-size:0.7rem}
+input[type=range]{-webkit-appearance:none;width:100%;height:2px;background:var(--border);border-radius:1px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:var(--acc);cursor:pointer;box-shadow:0 0 0 2px var(--bg)}
+.btn{width:100%;padding:0.38rem;border-radius:4px;border:1px solid var(--border);background:var(--panel);
+  color:var(--text);font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.go{background:var(--acc);color:#fff;border-color:var(--acc)}
+.ib{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:0.45rem;
+  font-family:'Space Mono',monospace;font-size:0.65rem;line-height:1.9;color:var(--muted)}
+.ib .v{color:var(--text)}.ib .c1{color:var(--t1)}.ib .c2{color:var(--t2)}.ib .cd{color:var(--diff)}
+/* CANVAS GRID: 3 colonne sopra + riga confronto */
+.ca{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.grid{flex:1;min-height:0;display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:1fr 220px;
+  gap:1px;background:var(--border)}
+.pw{background:var(--bg2);position:relative;overflow:hidden}
+.pl{position:absolute;top:7px;left:9px;font-size:0.57rem;font-weight:700;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);z-index:2}
+.pspan{grid-column:1/4;background:var(--bg2);position:relative;overflow:hidden}
+canvas{width:100%;height:100%;display:block}
+.ibar{flex-shrink:0;border-top:1px solid var(--border);padding:0.25rem 1rem;background:#020609;
+  display:flex;gap:1.4rem;flex-wrap:wrap;font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted)}
+.ibar span{color:var(--text)}
+</style>
+</head>
+<body>
+<header>
+  <h1>DInSAR <em>— Interferometria Radar Differenziale da Satellite</em></h1>
+  <div class="formula">Δφ = 4π · Δd / λ &nbsp;→&nbsp; Δd = λ · Δφ / (4π)</div>
+</header>
+<div class="main">
+<aside class="sb">
+  <div>
+    <div class="sl">Animazione</div>
+    <div style="display:flex;gap:0.35rem;margin-bottom:0.45rem">
+      <button class="btn go" id="btnPlay">▶ Avvia</button>
+      <button class="btn" id="btnReset" style="width:auto;padding:0.38rem 0.55rem">↺</button>
+    </div>
+    <div class="cr">
+      <div class="ch">Velocità <span class="cv" id="spdV">0.3×</span></div>
+      <input type="range" id="spdS" min="0.1" max="1.0" step="0.1" value="0.3">
+    </div>
+  </div>
+  <div>
+    <div class="sl">Spostamento bersaglio</div>
+    <div class="cr">
+      <div class="ch">Δd lungo LOS <span class="cv" id="dspV">0.7 cm</span></div>
+      <input type="range" id="dspS" min="-14" max="14" step="0.2" value="0.7">
+    </div>
+  </div>
+  <div>
+    <div class="sl">Misure calcolate</div>
+    <div class="ib">
+      λ = <span class="v">5.6 cm</span> (banda C)<br>
+      φ₁ = <span class="c1" id="phi1v">—</span><br>
+      φ₂ = <span class="c2" id="phi2v">—</span><br>
+      Δφ = <span class="cd" id="dphiv">—</span><br>
+      Δd = <span class="cd" id="dspRv">—</span>
+    </div>
+  </div>
+  <div>
+    <div class="sl">Note fisiche</div>
+    <div class="ib" style="font-size:0.61rem;line-height:1.65">
+      L'onda di <b>ritorno</b> riparte da zero al bersaglio con la fase accumulata φ = 4πR/λ.<br><br>
+      La fase residua (mod 2π) cambia di Δφ = 4πΔd/λ tra T1 e T2.<br><br>
+      1 frangia = λ/2 ≈ <b>2.8 cm</b><br>
+      (Δd=λ/2 → Δφ=π, Δd=λ → Δφ=2π≡0)
+    </div>
+  </div>
+  <div>
+    <div class="sl">Geometria fissa</div>
+    <div class="ib" style="font-size:0.61rem;line-height:1.65">
+      Angolo LOS: <b>35°</b><br>
+      Baseline orb.: <b>0 m</b><br>
+      Distanza R: <b>~800 km</b>
+    </div>
+  </div>
+</aside>
+<div class="ca">
+  <div class="grid">
+    <div class="pw"><div class="pl">Geometria acquisizione</div><canvas id="cGeo"></canvas></div>
+    <div class="pw"><div class="pl" style="color:var(--t1)">Segnale T1 — LOS</div><canvas id="cW1"></canvas></div>
+    <div class="pw"><div class="pl" style="color:var(--t2)">Segnale T2 — LOS</div><canvas id="cW2"></canvas></div>
+    <div class="pspan pw"><div class="pl">Confronto fasi — Δφ</div><canvas id="cPh"></canvas></div>
+  </div>
+  <div class="ibar">
+    <div>Fase: <span id="ibPh">—</span></div>
+    <div>λ/2 = <span id="ibHalf">2.8 cm</span></div>
+    <div>Δφ = <span id="ibDph">—</span></div>
+    <div>Δd = <span id="ibDsp">—</span></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ─── Fisica ───────────────────────────────────────────
+const LAMBDA = 0.056; // 5.6 cm banda C
+const R1     = 800000; // 800 km distanza nominale
+let   DSP    = 0.007;  // spostamento LOS in metri (default 0.7 cm → Δφ=90°)
+
+function phi_ret(R){ return (4*Math.PI*R/LAMBDA) % (2*Math.PI); }
+
+// ─── Canvas ───────────────────────────────────────────
+const cGeo=document.getElementById('cGeo');
+const cW1 =document.getElementById('cW1');
+const cW2 =document.getElementById('cW2');
+const cPh =document.getElementById('cPh');
+const gGeo=cGeo.getContext('2d');
+const g1  =cW1.getContext('2d');
+const g2  =cW2.getContext('2d');
+const gPh =cPh.getContext('2d');
+
+function resize(){
+  [cGeo,cW1,cW2,cPh].forEach(c=>{
+    const r=c.getBoundingClientRect();
+    c.width=Math.round(r.width); c.height=Math.round(r.height);
+  });
+  draw();
+}
+window.addEventListener('resize',resize);
+
+// ─── Animazione ───────────────────────────────────────
+// fasi: 0=T1 andata  1=T1 ritorno  2=fade  3=T2 andata  4=T2 ritorno  5=confronto
+const DURS=[3, 3, 0.8, 3, 3, 4]; // secondi per fase a velocità 1×
+let STATE={ph:0, t:0, run:false, spd:0.3};
+
+// Onde già completate (rimangono visibili)
+let wave1Done=false; // true dopo che T1 ritorno è completato
+let wave2Done=false; // true dopo che T2 ritorno è completato
+
+const lerp =(a,b,t)=>a+(b-a)*t;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const eIO  =t=>t<0.5?2*t*t:-1+(4-2*t)*t;
+
+// ─── Geometria scenica ────────────────────────────────
+function sc(W,H){
+  const ang=35*Math.PI/180;
+  const gY=H*0.80, tX=W*0.58, tY=gY;
+  const s1={x:W*0.22, y:H*0.12};
+  const s2={x:s1.x, y:s1.y};  // baseline zero: stesso satellite
+  const dPx=DSP/0.028*H*0.025;
+  const t2={x:tX+Math.sin(ang)*dPx, y:tY-Math.cos(ang)*dPx};
+  return{gY,tX,tY,s1,s2,t2,ang};
+}
+
+// ─── DRAW GEOMETRIA ───────────────────────────────────
+function drawGeo(){
+  const W=cGeo.width,H=cGeo.height;
+  gGeo.clearRect(0,0,W,H);
+  bg(gGeo,W,H);
+  const {gY,tX,tY,s1,s2,t2}=sc(W,H);
+  const ph=STATE.ph, t=eIO(clamp(STATE.t,0,1));
+
+  // terreno
+  const tg=gGeo.createLinearGradient(0,gY,0,H);
+  tg.addColorStop(0,'#1a3a1a');tg.addColorStop(1,'#0a1a0a');
+  gGeo.fillStyle=tg;gGeo.fillRect(0,gY,W,H-gY);
+  gGeo.strokeStyle='#2a5a2a';gGeo.lineWidth=1;
+  gGeo.beginPath();gGeo.moveTo(0,gY);gGeo.lineTo(W,gY);gGeo.stroke();
+  // orbita
+  gGeo.setLineDash([4,4]);gGeo.strokeStyle='#1a2d4a';gGeo.lineWidth=1;
+  gGeo.beginPath();gGeo.moveTo(0,s1.y+s1.x*0.25);gGeo.lineTo(W,s1.y-W*0.12);
+  gGeo.stroke();gGeo.setLineDash([]);
+
+  // T1 alpha
+  const a1 = ph<2?1 : ph===2?(1-t):0;
+  // T2 alpha
+  const a2 = ph>=3 ? 1 : 0;
+
+  // T1
+  if(a1>0.01){
+    gGeo.globalAlpha=a1;
+    sat(gGeo,s1,'#00d4ff','T1');
+    tgt(gGeo,tX,tY,'#00d4ff');
+    los(gGeo,s1.x,s1.y,tX,tY,'#00d4ff');
+    // punto mobile
+    if(ph===0){dot(gGeo,lerp(s1.x,tX,t),lerp(s1.y,tY,t),'#00d4ff');}
+    if(ph===1){dot(gGeo,lerp(tX,s1.x,t),lerp(tY,s1.y,t),'#00d4ff');}
+    gGeo.globalAlpha=1;
+  }
+  // T2
+  if(a2>0.01){
+    gGeo.globalAlpha=a2;
+    sat(gGeo,s2,'#ff6b35','T2');
+    tgt(gGeo,t2.x,t2.y,'#ff6b35');
+    los(gGeo,s2.x,s2.y,t2.x,t2.y,'#ff6b35');
+    if(ph===3){dot(gGeo,lerp(s2.x,t2.x,t),lerp(s2.y,t2.y,t),'#ff6b35');}
+    if(ph===4){dot(gGeo,lerp(t2.x,s2.x,t),lerp(t2.y,s2.y,t),'#ff6b35');}
+    gGeo.globalAlpha=1;
+  }
+  // Fase confronto: entrambi + vettore Δd + baseline
+  if(ph===5){
+    const ca=clamp(t*2,0,1);
+    gGeo.globalAlpha=ca;
+    sat(gGeo,s1,'#00d4ff','T1'); tgt(gGeo,tX,tY,'#00d4ff'); los(gGeo,s1.x,s1.y,tX,tY,'#00d4ff');
+    sat(gGeo,s2,'#ff6b35','T2'); tgt(gGeo,t2.x,t2.y,'#ff6b35'); los(gGeo,s2.x,s2.y,t2.x,t2.y,'#ff6b35');
+    if(t>0.4){
+      const da=clamp((t-0.4)/0.3,0,1);
+      gGeo.globalAlpha=da;
+      gGeo.strokeStyle='#b4ff6b';gGeo.lineWidth=2;
+      gGeo.beginPath();gGeo.moveTo(tX,tY);gGeo.lineTo(t2.x,t2.y);gGeo.stroke();
+      gGeo.font='bold 10px Space Mono';gGeo.fillStyle='#b4ff6b';
+      gGeo.textAlign='left';gGeo.fillText('Δd',(tX+t2.x)/2+6,(tY+t2.y)/2);
+      gGeo.strokeStyle='#7c5cff';gGeo.lineWidth=1.5;gGeo.setLineDash([4,3]);
+      gGeo.beginPath();gGeo.moveTo(s1.x,s1.y);gGeo.lineTo(s2.x,s2.y);gGeo.stroke();
+      gGeo.setLineDash([]);
+      gGeo.font='9px Space Mono';gGeo.fillStyle='#7c5cff';gGeo.textAlign='center';
+      gGeo.fillText('B⊥',(s1.x+s2.x)/2-8,(s1.y+s2.y)/2-4);
+    }
+    gGeo.globalAlpha=1;
+  }
+}
+
+function sat(g,p,col,lbl){
+  const s=9;
+  g.fillStyle=col+'30';g.strokeStyle=col;g.lineWidth=1.5;
+  g.fillRect(p.x-s,p.y-s*0.5,s*2,s);g.strokeRect(p.x-s,p.y-s*0.5,s*2,s);
+  g.fillStyle=col+'50';g.strokeStyle=col+'80';g.lineWidth=1;
+  [-1,1].forEach(side=>{g.fillRect(p.x+side*s,p.y-3,s*1.5,6);g.strokeRect(p.x+side*s,p.y-3,s*1.5,6);});
+  g.font='bold 9px Space Mono';g.fillStyle=col;g.textAlign='center';g.fillText(lbl,p.x,p.y-s-5);
+}
+function tgt(g,x,y,col){
+  const gr=g.createRadialGradient(x,y,0,x,y,16);
+  gr.addColorStop(0,col+'35');gr.addColorStop(1,col+'00');
+  g.beginPath();g.arc(x,y,16,0,Math.PI*2);g.fillStyle=gr;g.fill();
+  g.beginPath();g.arc(x,y,7,0,Math.PI*2);
+  g.fillStyle=col+'40';g.strokeStyle=col;g.lineWidth=2;g.fill();g.stroke();
+  g.strokeStyle=col;g.lineWidth=1.5;
+  g.beginPath();g.moveTo(x-5,y);g.lineTo(x+5,y);g.stroke();
+  g.beginPath();g.moveTo(x,y-5);g.lineTo(x,y+5);g.stroke();
+}
+function los(g,x1,y1,x2,y2,col){
+  g.setLineDash([5,4]);g.strokeStyle=col+'55';g.lineWidth=1;
+  g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);
+}
+function dot(g,x,y,col){
+  g.beginPath();g.arc(x,y,5,0,Math.PI*2);
+  g.fillStyle=col;g.shadowColor=col;g.shadowBlur=12;g.fill();g.shadowBlur=0;
+}
+function bg(g,W,H){
+  const b=g.createLinearGradient(0,0,0,H);
+  b.addColorStop(0,'#020609');b.addColorStop(1,'#040c18');
+  g.fillStyle=b;g.fillRect(0,0,W,H);
+}
+
+// ─── DRAW ONDA (pannello singolo T1 o T2) ─────────────
+// ph: fase corrente, isT1: true/false
+// La sinusoide usa 3 cicli visibili (λ grande per leggibilità)
+function drawWavePanel(ctx, canvas, col, isT1){
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H); bg(ctx,W,H);
+
+  const ph=STATE.ph, t=eIO(clamp(STATE.t,0,1));
+  const R = isT1 ? R1 : R1+DSP;
+  const phiRet = phi_ret(R);
+
+  // Questo pannello è attivo nelle fasi corrispondenti:
+  // T1: ph 0,1 (animazione) e ph>=2 (rimane visibile)
+  // T2: ph 3,4 (animazione) e ph>=5 (rimane visibile, ma ph<3 non compare)
+  const isActive1 = isT1  && ph>=0;
+  const isActive2 = !isT1 && ph>=3;
+  if(!isActive1 && !isActive2){return;}
+
+  // Calcola il progresso di andata e ritorno per questo pannello
+  let goProgress=0, retProgress=0;
+  if(isT1){
+    if(ph===0) goProgress=t;
+    else goProgress=1;
+    if(ph===1) retProgress=t;
+    else if(ph>1) retProgress=1;
+  } else {
+    if(ph===3) goProgress=t;
+    else if(ph>=4) goProgress=1;
+    if(ph===4) retProgress=t;
+    else if(ph>=5) retProgress=1;
+  }
+
+  const xSat=W*0.06, xTgt=W*0.94, yMid=H*0.50, amp=H*0.28;
+  const nCy=3.7, k=2*Math.PI*nCy/(xTgt-xSat);
+
+  // Asse LOS
+  ctx.strokeStyle='#1a2d4a'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(xSat,yMid);ctx.lineTo(xTgt,yMid);ctx.stroke();
+  // Linea verticale bersaglio
+  ctx.setLineDash([2,4]);ctx.strokeStyle='#2a4060';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(xTgt,yMid-amp-8);ctx.lineTo(xTgt,yMid+amp+8);ctx.stroke();
+  ctx.setLineDash([]);
+  // Labels
+  ctx.font='8px Space Mono';ctx.fillStyle='#3a5a7a';
+  ctx.textAlign='center';
+  ctx.fillText('SAT',xSat,yMid-amp-14);
+  ctx.fillText('TARGET',xTgt,yMid-amp-14);
+
+  // ── Onda di andata (SAT → TARGET) ──
+  // Parte da y=0 al satellite, arriva a y=amp*sin(phiRet) al bersaglio.
+  // Usiamo nCy cicli "visivi" ma la fase finale è determinata da phiRet.
+  // Formula: sin( k*(x-xSat) * phiRet / (k*(xTgt-xSat)) )
+  // = sin( phiRet * (x-xSat)/(xTgt-xSat) * nCy * 2π / phiRet )
+  // Più semplice: scala k in modo che all'arrivo la fase sia phiRet
+  // k_eff = phiRet / (xTgt - xSat)  → sin(k_eff*(x-xSat)): parte da 0, arriva a sin(phiRet)
+  // Ma vogliamo anche che si vedano più cicli (non solo una curva monotona).
+  // Soluzione: usiamo nCy cicli interi + la fase residua
+  // y = amp * sin( 2π*nCy*(x-xSat)/(xTgt-xSat) + phiRet - 2π*nCy )
+  //       = amp * sin( 2π*nCy*(x-xSat)/(xTgt-xSat) + phiRet_residua )
+  // dove phiRet_residua = phiRet mod 2π (già calcolato)
+  // Così: a x=xSat → sin(phiRet_residua - 2π*nCy + 0) ... NON è zero.
+  //
+  // La soluzione più pulita: offset sull'argomento tale che a x=xSat sia zero
+  // e a x=xTgt sia phiRet:
+  // sin( nCy*2π*(x-xSat)/(xTgt-xSat) + phiRet - nCy*2π )
+  // a x=xSat: sin(phiRet - nCy*2π) = sin(phiRet)  ← NON zero in generale
+  //
+  // La vera soluzione: sin( alpha*(x-xSat) + beta ) con:
+  //   beta = 0 (parte da zero al satellite)  → beta=0, sin(0)=0 ✓
+  //   alpha*(xTgt-xSat) = phiRet + 2π*n  (arriva a phiRet, con n interi visivi)
+  // Scegliamo n=3 (3 cicli interi visibili) → alpha = (phiRet + 2π*3)/(xTgt-xSat)
+  const nFull = 3; // cicli interi visibili
+  const kGo = (phiRet + 2*Math.PI*nFull) / (xTgt - xSat);
+
+  if(goProgress>0){
+    const xEnd=lerp(xSat,xTgt,goProgress);
+    ctx.save();
+    ctx.beginPath();let first=true;
+    for(let x=xSat;x<=xEnd;x+=1){
+      const y=yMid+amp*Math.sin(kGo*(x-xSat));
+      if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=col+'70';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.restore();
+    if(goProgress<1){
+      const yPt=yMid+amp*Math.sin(kGo*(xEnd-xSat));
+      dot(ctx,xEnd,yPt,col);
+    }
+    ctx.font='8px Space Mono';ctx.fillStyle=col+'99';
+    ctx.textAlign='left';ctx.fillText('andata →',xSat+3,yMid-amp-2);
+  }
+
+  // ── Onda di ritorno (TARGET → SAT) ──
+  // Parte da y=0 al bersaglio, arriva a y=amp*sin(phiRet) al satellite.
+  // Stessa logica: kRet = (phiRet + 2π*3) / (xTgt-xSat)
+  const kRet = kGo; // stesso k (stessa distanza, stessa fisica)
+
+  if(retProgress>0){
+    const xEnd=lerp(xTgt,xSat,retProgress);
+    ctx.save();
+    ctx.beginPath();let first=true;
+    for(let x=xEnd;x<=xTgt;x+=1){
+      const y=yMid+amp*Math.sin(kRet*(xTgt-x));
+      if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.shadowColor=col;ctx.shadowBlur=8;ctx.stroke();
+    ctx.lineWidth=1.5;ctx.shadowBlur=0;ctx.stroke();
+    ctx.restore();
+    if(retProgress<1){
+      const yPt=yMid+amp*Math.sin(kRet*(xTgt-xEnd));
+      dot(ctx,xEnd,yPt,col);
+    }
+    ctx.font='8px Space Mono';ctx.fillStyle=col;
+    ctx.textAlign='right';ctx.fillText('← ritorno',xTgt-3,yMid-amp-2);
+    if(retProgress>0.95){
+      const fa=clamp((retProgress-0.95)/0.05,0,1);
+      ctx.save();ctx.globalAlpha=fa;
+      ctx.font='bold 10px Space Mono';ctx.fillStyle=col;
+      const phDeg=(phiRet*180/Math.PI).toFixed(1);
+      const lbl=isT1?'φ₁':'φ₂';
+      ctx.textAlign='center';
+      ctx.fillText(`${lbl} = ${phDeg}°`,xSat+(xTgt-xSat)*0.35,yMid+amp+20);
+      ctx.restore();
+    }
+  }
+}
+
+function drawSin(ctx,x1,x2,yM,amp,k,ph,col,lw){
+  if(x2<=x1)return;
+  ctx.save();
+  ctx.beginPath();let first=true;
+  for(let x=x1;x<=x2;x+=1){
+    const y=yM+amp*Math.sin(k*(x-x1)+ph);
+    if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle=col;ctx.lineWidth=lw+2;ctx.shadowColor=col;ctx.shadowBlur=6;ctx.stroke();
+  ctx.lineWidth=lw;ctx.shadowBlur=0;ctx.stroke();
+  ctx.restore();
+}
+
+// ─── DRAW CONFRONTO FASI ──────────────────────────────
+function drawPhase(){
+  const W=cPh.width, H=cPh.height;
+  gPh.clearRect(0,0,W,H); bg(gPh,W,H);
+  if(STATE.ph<5) return;
+
+  const t=eIO(clamp(STATE.t,0,1));
+  const ph1=phi_ret(R1);
+  const ph2=phi_ret(R1+DSP);
+  const dph=(ph2-ph1+2*Math.PI)%(2*Math.PI);
+
+  const xS=W*0.08, xE=W*0.92;
+  const nCy=2.5, wl=(xE-xS)/nCy, k=2*Math.PI/wl;
+  const yMid=H*0.52, amp=H*0.33;
+
+  // Asse
+  gPh.strokeStyle='#1a2d4a'; gPh.lineWidth=1;
+  gPh.beginPath(); gPh.moveTo(xS,yMid); gPh.lineTo(xE,yMid); gPh.stroke();
+
+  // ── Onda φ₁ (T1 ritorno) ──
+  const a1=clamp(t*3,0,1);
+  drawSinFull(gPh,xS,xE,yMid,amp,k,ph1,'#00d4ff',a1,'');
+
+  // ── Onda φ₂ (T2 ritorno) ──
+  const a2=clamp((t-0.15)*3,0,1);
+  drawSinFull(gPh,xS,xE,yMid,amp,k,ph2,'#ff6b35',a2,'');
+
+  // ── Evidenzia Δφ tra le due creste ──
+  if(a2>0.6){
+    const da=clamp((a2-0.6)/0.3,0,1);
+
+    // Trova la prima cresta di φ₁ e di φ₂ dopo xS
+    // cresta quando k*(x-xS)-phase = π/2  →  x = xS + (π/2 + phase)/k
+    const xCrest1 = xS + (Math.PI/2 + ph1) / k;
+    const xCrest2 = xS + (Math.PI/2 + ph2) / k;
+    // Porta le creste dentro il range [xS, xE]
+    const wrapCrest = (xc) => {
+      while(xc < xS) xc += wl;
+      while(xc > xE) xc -= wl;
+      return xc;
+    };
+    const c1=wrapCrest(xCrest1);
+    const c2=wrapCrest(xCrest2);
+    const yTop=yMid-amp;
+
+    gPh.save(); gPh.globalAlpha=da;
+
+    // Frecce verticali alle creste
+    [c1,c2].forEach((cx,i)=>{
+      const col=i===0?'#00d4ff':'#ff6b35';
+      gPh.strokeStyle=col+'80'; gPh.lineWidth=1; gPh.setLineDash([3,3]);
+      gPh.beginPath(); gPh.moveTo(cx,yMid-amp-4); gPh.lineTo(cx,yMid+amp+4); gPh.stroke();
+      gPh.setLineDash([]);
+    });
+
+    // Freccia orizzontale doppia tra le due creste (Δφ)
+    const yArr=yTop-18;
+    const xL=Math.min(c1,c2), xR=Math.max(c1,c2);
+    gPh.strokeStyle='#b4ff6b'; gPh.lineWidth=1.8;
+    gPh.beginPath(); gPh.moveTo(xL,yArr); gPh.lineTo(xR,yArr); gPh.stroke();
+    // Punte freccia
+    [[xL,1],[xR,-1]].forEach(([x,s])=>{
+      gPh.beginPath(); gPh.moveTo(x,yArr);
+      gPh.lineTo(x+s*7,yArr-4); gPh.lineTo(x+s*7,yArr+4); gPh.closePath();
+      gPh.fillStyle='#b4ff6b'; gPh.fill();
+    });
+    // Linee verticali di connessione alle creste
+    gPh.strokeStyle='#b4ff6b60'; gPh.lineWidth=1; gPh.setLineDash([2,3]);
+    gPh.beginPath(); gPh.moveTo(c1,yArr); gPh.lineTo(c1,yMid-amp); gPh.stroke();
+    gPh.beginPath(); gPh.moveTo(c2,yArr); gPh.lineTo(c2,yMid-amp); gPh.stroke();
+    gPh.setLineDash([]);
+
+    // Label Δφ sopra la freccia
+    const dphDeg=(dph*180/Math.PI).toFixed(1);
+    gPh.font='bold 10px Space Mono'; gPh.fillStyle='#b4ff6b'; gPh.textAlign='center';
+    gPh.fillText(`Δφ = ${dphDeg}°`, (xL+xR)/2, yArr-8);
+
+    // Formula e risultato in basso
+    if(t>0.75){
+      const fa=clamp((t-0.75)/0.2,0,1);
+      gPh.globalAlpha=da*fa;
+      gPh.font='700 10px Space Mono'; gPh.fillStyle='#b4ff6b';
+      gPh.textAlign='center';
+      const dspCm=(DSP*100).toFixed(1);
+      gPh.fillText(`Δd = λ · Δφ / (4π) = ${dspCm} cm  (± n · λ/2)`, W/2, H*0.93);
+    }
+
+    gPh.restore();
+  }
+
+  // Labels onde
+  if(a1>0.4){
+    gPh.save(); gPh.globalAlpha=a1;
+    gPh.font='bold 9px Space Mono'; gPh.fillStyle='#00d4ff';
+    gPh.textAlign='left'; gPh.fillText('andata+ritorno T1  (φ₁)', xS, H*0.10);
+    gPh.restore();
+  }
+  if(a2>0.4){
+    gPh.save(); gPh.globalAlpha=a2;
+    gPh.font='bold 9px Space Mono'; gPh.fillStyle='#ff6b35';
+    gPh.textAlign='left'; gPh.fillText('andata+ritorno T2  (φ₂)', xS, H*0.10+14);
+    gPh.restore();
+  }
+}
+
+function drawSinFull(g,x1,x2,yM,amp,k,phase,col,alpha,label){
+  if(alpha<0.01)return;
+  g.save();g.globalAlpha=alpha;
+  g.strokeStyle='#1a2d4a60';g.lineWidth=0.5;
+  g.beginPath();g.moveTo(x1,yM);g.lineTo(x2,yM);g.stroke();
+  g.beginPath();let first=true;
+  for(let x=x1;x<=x2;x+=1){
+    const y=yM+amp*Math.sin(k*(x-x1)-phase);
+    if(first){g.moveTo(x,y);first=false;}else g.lineTo(x,y);
+  }
+  g.strokeStyle=col;g.lineWidth=3;g.shadowColor=col;g.shadowBlur=7;g.stroke();
+  g.lineWidth=1.5;g.shadowBlur=0;g.stroke();
+  if(label){g.font='8px Space Mono';g.fillStyle=col+'bb';g.textAlign='left';g.fillText(label,4,yM+2);}
+  g.restore();
+}
+
+// ─── INFO ─────────────────────────────────────────────
+function updateInfo(){
+  const ph1=phi_ret(R1), ph2=phi_ret(R1+DSP);
+  const dph=(ph2-ph1+2*Math.PI)%(2*Math.PI);
+  document.getElementById('phi1v').textContent=(ph1*180/Math.PI).toFixed(1)+'°';
+  document.getElementById('phi2v').textContent=(ph2*180/Math.PI).toFixed(1)+'°';
+  document.getElementById('dphiv').textContent=(dph*180/Math.PI).toFixed(1)+'°';
+  document.getElementById('dspRv').textContent=(DSP*100).toFixed(1)+' cm';
+  document.getElementById('ibDph').textContent=(dph*180/Math.PI).toFixed(1)+'°';
+  document.getElementById('ibDsp').textContent=(DSP*100).toFixed(1)+' cm';
+  const names=['T1 — emissione','T1 — ritorno','Transizione T1→T2','T2 — emissione','T2 — ritorno','Confronto di fase'];
+  document.getElementById('ibPh').textContent=names[STATE.ph]||'—';
+}
+
+// ─── DRAW MAIN ────────────────────────────────────────
+function draw(){
+  drawGeo();
+  drawWavePanel(g1,cW1,'#00d4ff',true);
+  drawWavePanel(g2,cW2,'#ff6b35',false);
+  drawPhase();
+  updateInfo();
+}
+
+// ─── TICK ─────────────────────────────────────────────
+let lastTs=null;
+function tick(ts){
+  if(STATE.run){
+    if(lastTs!==null){
+      const dt=(ts-lastTs)/1000*STATE.spd;
+      STATE.t+=dt/DURS[STATE.ph];
+      if(STATE.t>=1){
+        STATE.t=0; STATE.ph++;
+        if(STATE.ph>=DURS.length){
+          STATE.ph=DURS.length-1; STATE.t=1; STATE.run=false;
+          document.getElementById('btnPlay').textContent='▶ Avvia';
+          document.getElementById('btnPlay').classList.add('go');
+        }
+      }
+    }
+    lastTs=ts;
+  } else { lastTs=null; }
+  try{draw();}catch(e){console.error(e);}
+  requestAnimationFrame(tick);
+}
+
+// ─── CONTROLLI ────────────────────────────────────────
+document.getElementById('btnPlay').addEventListener('click',()=>{
+  STATE.run=!STATE.run;
+  const b=document.getElementById('btnPlay');
+  b.textContent=STATE.run?'⏸ Pausa':'▶ Avvia';
+  b.classList.toggle('go',!STATE.run);
+});
+document.getElementById('btnReset').addEventListener('click',()=>{
+  STATE.run=false; STATE.ph=0; STATE.t=0;
+  document.getElementById('btnPlay').textContent='▶ Avvia';
+  document.getElementById('btnPlay').classList.add('go');
+  draw();
+});
+document.getElementById('spdS').addEventListener('input',e=>{
+  STATE.spd=parseFloat(e.target.value);
+  document.getElementById('spdV').textContent=STATE.spd.toFixed(1)+'×';
+});
+document.getElementById('dspS').addEventListener('input',e=>{
+  DSP=parseFloat(e.target.value)/100;
+  document.getElementById('dspV').textContent=(DSP*100).toFixed(1)+' cm';
+  draw();
+});
+
+setTimeout(()=>{resize();requestAnimationFrame(tick);},80);
+</script>
+</body>
+</html>
