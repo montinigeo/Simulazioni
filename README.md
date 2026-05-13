@@ -146,7 +146,7 @@ Dashboard interattivo per l'analisi della **visibilità geometrica SAR** di aree
 
 ### Contenuto
 
-La visibilità di una frana da satellite dipende dall'orientazione della direzione principale di movimento della frana rispetto alla geometria di acquisizione del satellite (azimut e angolo off-nadir). Lo strumento, ipotizzando che il dissesto gravitativo si muova lungo la direzione di massima pendenza del versante, calcola, per ogni combinazione di aspect/slope configurabile dall'utente, quale è la percentuale di movimento effettivamente rilevabile dal satellite nelle orbite ascendente e discendente. Inoltre, viene proposto un diagramma conbinato di visibilità confrontando le due orbite.
+La visibilità di una frana da satellite dipende dall'orientamento della direzione principale di movimento della frana rispetto alla geometria di acquisizione del satellite (azimut e angolo off-nadir). Lo strumento, ipotizzando che il dissesto gravitativo si muova lungo la direzione di massima pendenza del versante, calcola, per ogni combinazione di aspect/slope configurabile dall'utente, quale è la percentuale di movimento effettivamente rilevabile dal satellite nelle orbite ascendente e discendente. Inoltre, viene proposto un diagramma conbinato di visibilità confrontando le due orbite.
 
 ### Funzionalità
 
