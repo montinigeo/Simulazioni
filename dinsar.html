@@ -418,9 +418,27 @@ function drawSin(ctx,x1,x2,yM,amp,k,ph,col,lw){
 function drawPhase(){
   const W=cPh.width, H=cPh.height;
   gPh.clearRect(0,0,W,H); bg(gPh,W,H);
-  if(STATE.ph<5) return;
 
-  const t=eIO(clamp(STATE.t,0,1));
+  // Mostra onda T1 dalla fine della fase 1 (ritorno T1)
+  // Mostra onda T2 dalla fine della fase 4 (ritorno T2)
+  const ph=STATE.ph, t=eIO(clamp(STATE.t,0,1));
+
+  // a1: appare all'inizio della fase 2 (subito dopo T1 ritorno)
+  //     dissolvenza rapida nei primi ~60% della fase 2 (0.8s totali -> ~0.5s)
+  let a1=0;
+  if(ph===2)      a1=clamp(t/0.6,0,1);
+  else if(ph>=3)  a1=1;
+
+  // a2: appare subito all'inizio della fase 5, stessa durata reale di T1
+  // fase 2 dura 0.8s con fade in t=0..0.6 -> 0.48s reali
+  // fase 5 dura 4s -> 0.48s reali = t=0..0.12
+  let a2=0;
+  if(ph===5)      a2=clamp(t/0.12,0,1);
+  else if(ph>=6)  a2=1;
+
+  // Niente da disegnare
+  if(a1<0.01 && a2<0.01) return;
+
   const ph1=phi_ret(R1);
   const ph2=phi_ret(R1+DSP);
   const dph=(ph2-ph1+2*Math.PI)%(2*Math.PI);
@@ -429,21 +447,22 @@ function drawPhase(){
   const nCy=2.5, wl=(xE-xS)/nCy, k=2*Math.PI/wl;
   const yMid=H*0.52, amp=H*0.33;
 
-  // Asse
+  // Asse (solo se almeno un'onda è visibile)
   gPh.strokeStyle='#1a2d4a'; gPh.lineWidth=1;
   gPh.beginPath(); gPh.moveTo(xS,yMid); gPh.lineTo(xE,yMid); gPh.stroke();
 
   // ── Onda φ₁ (T1 ritorno) ──
-  const a1=clamp(t*3,0,1);
   drawSinFull(gPh,xS,xE,yMid,amp,k,ph1,'#00d4ff',a1,'');
 
   // ── Onda φ₂ (T2 ritorno) ──
-  const a2=clamp((t-0.15)*3,0,1);
   drawSinFull(gPh,xS,xE,yMid,amp,k,ph2,'#ff6b35',a2,'');
 
-  // ── Evidenzia Δφ tra le due creste ──
-  if(a2>0.6){
-    const da=clamp((a2-0.6)/0.3,0,1);
+  // Nella fase 5 usiamo t per animare Δφ e formula
+  const tC=ph===5?eIO(clamp(STATE.t,0,1)):1;
+
+  // ── Evidenzia Δφ tra le due creste ── (solo in fase 5)
+  if(ph>=5 && a2>0.6){
+    const da=clamp((tC-0.3)/0.4,0,1);
 
     // Trova la prima cresta di φ₁ e di φ₂ dopo xS
     // cresta quando k*(x-xS)-phase = π/2  →  x = xS + (π/2 + phase)/k
@@ -492,8 +511,8 @@ function drawPhase(){
     gPh.fillText(`Δφ = ${dphDeg}°`, (xL+xR)/2, yArr-8);
 
     // Formula e risultato in basso
-    if(t>0.75){
-      const fa=clamp((t-0.75)/0.2,0,1);
+    if(tC>0.75){
+      const fa=clamp((tC-0.75)/0.2,0,1);
       gPh.globalAlpha=da*fa;
       gPh.font='700 10px Space Mono'; gPh.fillStyle='#b4ff6b';
       gPh.textAlign='center';
@@ -505,13 +524,13 @@ function drawPhase(){
   }
 
   // Labels onde
-  if(a1>0.4){
+  if(a1>0.01){
     gPh.save(); gPh.globalAlpha=a1;
     gPh.font='bold 9px Space Mono'; gPh.fillStyle='#00d4ff';
     gPh.textAlign='left'; gPh.fillText('andata+ritorno T1  (φ₁)', xS, H*0.10);
     gPh.restore();
   }
-  if(a2>0.4){
+  if(a2>0.01){
     gPh.save(); gPh.globalAlpha=a2;
     gPh.font='bold 9px Space Mono'; gPh.fillStyle='#ff6b35';
     gPh.textAlign='left'; gPh.fillText('andata+ritorno T2  (φ₂)', xS, H*0.10+14);
