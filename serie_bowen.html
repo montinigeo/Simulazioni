@@ -125,11 +125,11 @@ const DISC = [
     note:'Orto- (enstatite) e clinopirosseni (augite). Si forma per reazione del fuso con l\'olivina già cristallizzata.',
     rocce:'Basalto, gabbro, peridotite' },
   { nome:'Anfibolo',    formula:'Ca₂(Mg,Fe)₅Si₈O₂₂(OH)₂', Ts:1200, Te:1000,
-    colore:'#37474f', sistema:'Monoclino', clivaggio:'A 60°/120°',
+    colore:'#78a0b0', sistema:'Monoclino', clivaggio:'A 60°/120°',
     note:'Hornblenda. Contiene ossidrili (OH⁻): richiede acqua nel magma. Tipico dei magmi idratati.',
     rocce:'Diorite, andesite, granodiorite' },
   { nome:'Biotite',     formula:'K(Mg,Fe)₃AlSi₃O₁₀(OH)₂', Ts:1050, Te:900,
-    colore:'#6d4c41', sistema:'Monoclino', clivaggio:'Perfetto basale {001}',
+    colore:'#c4875a', sistema:'Monoclino', clivaggio:'Perfetto basale {001}',
     note:'Mica nera. Ricca in K e OH⁻. Cristallizza in magmi molto differenziati. Forte pleocroismo bruno.',
     rocce:'Granito, granodiorite, riolite' },
   { nome:'K-feldspato', formula:'KAlSi₃O₈', Ts:900, Te:700,
@@ -314,35 +314,26 @@ function draw(){
 
     // Barra del minerale
     const barH=Math.max(4,yBot-yTop);
-    // Sfondo barra (sempre presente ma trasparente)
-    ctx.fillStyle=`rgba(30,34,48,0.5)`;
+    ctx.fillStyle='rgba(30,34,48,0.5)';
     ctx.fillRect(bx,yTop,barW,barH);
-    // Fill cristallizzato
+    // Bordo sempre colorato e continuo
+    ctx.strokeStyle=m.colore; ctx.lineWidth=1.5; ctx.globalAlpha=0.7;
+    ctx.strokeRect(bx,yTop,barW,barH); ctx.globalAlpha=1;
+    // Fill: solo quando cristallizza
     if(alpha>0){
       ctx.fillStyle=m.colore;
       ctx.globalAlpha=0.15+alpha*0.7;
       ctx.fillRect(bx,yTop,barW,barH);
       ctx.globalAlpha=1;
-      // Bordo
-      ctx.strokeStyle=m.colore;
-      ctx.lineWidth=alpha>0.05?1.5:0.5;
-      ctx.strokeRect(bx,yTop,barW,barH);
-    } else {
-      ctx.strokeStyle='rgba(100,110,130,0.3)';
-      ctx.lineWidth=0.5; ctx.setLineDash([2,2]);
-      ctx.strokeRect(bx,yTop,barW,barH);
-      ctx.setLineDash([]);
     }
 
     // Nome minerale
     const midY=yTop+(yBot-yTop)/2;
-    const discCol=alpha>0.1?m.colore:'rgba(160,170,185,0.7)';
-    ctx.globalAlpha=Math.max(0.5, alpha>0?0.7+alpha*0.3:0.5);
-    drawTextShadow(ctx, m.nome, ly.cx_disc, midY+4, discCol, 'bold 12px Crimson Pro');
+    // Testo sempre visibile a piena opacità
+    drawTextShadow(ctx, m.nome, ly.cx_disc, midY+4, m.colore, 'bold 12px Crimson Pro');
     if((yBot-yTop)>38){
-      drawTextShadow(ctx, m.formula, ly.cx_disc, midY+17, discCol, 'italic 9px Crimson Pro');
+      drawTextShadow(ctx, m.formula, ly.cx_disc, midY+17, m.colore, 'italic 9px Crimson Pro');
     }
-    ctx.globalAlpha=1;
 
     // Evidenzia minerale in cristallizzazione
     if(T>=m.Te && T<=m.Ts && alpha>0){
@@ -386,9 +377,15 @@ function draw(){
         ctx.globalAlpha=1;
       }
 
-      // Bordo barra
-      ctx.strokeStyle='rgba(100,150,200,0.5)'; ctx.lineWidth=1;
-      ctx.setLineDash([3,3]); ctx.strokeRect(bx,yTop,barW,barH); ctx.setLineDash([]);
+      // Bordo barra: colorato se almeno un membro ha iniziato, tratteggiato se nessuno
+      const anyStarted=contAttivi.some(m=>T<=m.Ts);
+      if(anyStarted){
+        ctx.strokeStyle='rgba(160,200,240,0.6)'; ctx.lineWidth=1;
+      } else {
+        ctx.strokeStyle='rgba(160,200,240,0.4)'; ctx.lineWidth=1;
+        ctx.setLineDash([4,3]);
+      }
+      ctx.strokeRect(bx,yTop,barW,barH); ctx.setLineDash([]);
 
       // Etichette: nome + An per ogni membro
       contAttivi.forEach((m,ii)=>{
@@ -396,11 +393,8 @@ function draw(){
         let alp=0;
         if(T<=m.Ts&&T>=m.Te) alp=(m.Ts-T)/(m.Ts-m.Te);
         else if(T<m.Te) alp=1;
-        const contCol=alp>0.1?m.colore:'rgba(160,180,200,0.7)';
-        ctx.globalAlpha=Math.max(0.5,alp>0?0.6+alp*0.4:0.5);
-        drawTextShadow(ctx, m.nome, ly.cx_cont, yM+4, contCol, 'bold 10px Crimson Pro');
-        drawTextShadow(ctx, 'An'+m.An, ly.cx_cont, yM+15, contCol, 'italic 9px Crimson Pro');
-        ctx.globalAlpha=1;
+        drawTextShadow(ctx, m.nome, ly.cx_cont, yM+4, m.colore, 'bold 10px Crimson Pro');
+        drawTextShadow(ctx, 'An'+m.An, ly.cx_cont, yM+15, m.colore, 'italic 9px Crimson Pro');
         // Linea separatrice tra i membri
         if(ii<contAttivi.length-1){
           const ySep=tempToY(m.Te,ly);
@@ -449,20 +443,13 @@ function draw(){
     const qH=Math.max(4,yQb-yQ);
     ctx.fillStyle='rgba(30,34,48,0.5)';
     ctx.fillRect(qx,yQ,qW,qH);
+    ctx.strokeStyle=QUARZO.colore; ctx.lineWidth=1.5; ctx.globalAlpha=0.7;
+    ctx.strokeRect(qx,yQ,qW,qH); ctx.globalAlpha=1;
     if(alphaQ>0){
       ctx.fillStyle=QUARZO.colore; ctx.globalAlpha=0.15+alphaQ*0.7;
       ctx.fillRect(qx,yQ,qW,qH); ctx.globalAlpha=1;
-      ctx.strokeStyle=QUARZO.colore; ctx.lineWidth=1.5;
-      ctx.strokeRect(qx,yQ,qW,qH);
-    } else {
-      ctx.strokeStyle='rgba(100,110,130,0.3)'; ctx.lineWidth=0.5;
-      ctx.setLineDash([2,2]); ctx.strokeRect(qx,yQ,qW,qH);
-      ctx.setLineDash([]);
     }
-    const qzCol=alphaQ>0.1?QUARZO.colore:'rgba(160,170,185,0.7)';
-    ctx.globalAlpha=Math.max(0.5,alphaQ>0?0.7+alphaQ*0.3:0.5);
-    drawTextShadow(ctx,'Quarzo',W/2,yQ+qH/2+4,qzCol,'bold 11px Crimson Pro');
-    ctx.globalAlpha=1;
+    drawTextShadow(ctx,'Quarzo',W/2,yQ+qH/2+4,QUARZO.colore,'bold 11px Crimson Pro');
 
     if(T>=QUARZO.Te && T<=QUARZO.Ts && alphaQ>0){
       ctx.strokeStyle=QUARZO.colore; ctx.lineWidth=2;
